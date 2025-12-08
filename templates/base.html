@@ -1,0 +1,314 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}NaughtyVerse{% endblock %}</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description"
+        content="{% block meta_description %}NaughtyVerse - Your ultimate adult universe. Stream premium adult content, explore diverse categories, and discover exclusive videos. A next-level platform for adult entertainment.{% endblock %}">
+    <meta name="keywords"
+        content="adult videos, porn, xxx, premium adult content, hentai, adult entertainment, free porn videos, HD adult videos">
+    <meta name="author" content="NaughtyVerse">
+    <meta name="rating" content="adult">
+    <meta name="RATING" content="RTA-5042-1996-1400-1577-RTA">
+    <link rel="rating" href="http://www.rtalabel.org/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:title"
+        content="{% block og_title %}NaughtyVerse - Premium Adult Entertainment Universe{% endblock %}">
+    <meta property="og:description"
+        content="{% block og_description %}Explore limitless adult content on NaughtyVerse. High-quality videos, diverse categories, and exclusive premium content for discerning viewers.{% endblock %}">
+    <meta property="og:site_name" content="NaughtyVerse">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ request.build_absolute_uri }}">
+    <meta name="twitter:title" content="{% block twitter_title %}NaughtyVerse - Premium Adult Universe{% endblock %}">
+    <meta name="twitter:description"
+        content="{% block twitter_description %}Your ultimate destination for premium adult entertainment. Stream, explore, and discover high-quality content.{% endblock %}">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'videos:home' %}">
+                <i class="bi bi-play-circle-fill me-2"></i>NaughtyVerse
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'videos:home' %}"><i class="bi bi-house me-1"></i>Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'videos:trending' %}"><i
+                                class="bi bi-fire me-1"></i>Trending</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'videos:newest' %}"><i class="bi bi-clock me-1"></i>Newest</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-grid me-1"></i>Categories
+                        </a>
+                        <ul class="dropdown-menu">
+                            {% for cat in nav_categories %}
+                            <li><a class="dropdown-item" href="{{ cat.get_absolute_url }}">{{ cat.name }}</a></li>
+                            {% empty %}
+                            <li><a class="dropdown-item" href="{% url 'videos:categories' %}">View All</a></li>
+                            {% endfor %}
+                            <li>
+                                <hr class="dropdown-divider" style="border-color: rgba(147, 51, 234, 0.3);">
+                            </li>
+                            <li><a class="dropdown-item" href="{% url 'videos:categories' %}"><i
+                                        class="bi bi-grid-3x3-gap me-2"></i>All Categories</a></li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <form class="d-flex search-box me-3" action="{% url 'videos:search' %}" method="GET">
+                    <input type="text" name="q" placeholder="Search videos..." value="{{ request.GET.q }}">
+                    <button type="submit"><i class="bi bi-search"></i></button>
+                </form>
+
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i>{{ user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i
+                                        class="bi bi-person me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="{% url 'videos:my_list' %}"><i
+                                        class="bi bi-list-ul me-2"></i>My List</a></li>
+                            <li><a class="dropdown-item" href="{% url 'videos:user_history' %}"><i
+                                        class="bi bi-clock-history me-2"></i>Watch History</a></li>
+                            <li><a class="dropdown-item" href="{% url 'videos:user_favorites' %}"><i
+                                        class="bi bi-heart me-2"></i>Favorites</a></li>
+                            <li><a class="dropdown-item" href="{% url 'videos:user_liked' %}"><i
+                                        class="bi bi-hand-thumbs-up me-2"></i>Liked Videos</a></li>
+                            {% if user.is_staff %}
+                            <li>
+                                <hr class="dropdown-divider" style="border-color: rgba(147, 51, 234, 0.3);">
+                            </li>
+                            <li><a class="dropdown-item" href="{% url 'admin:index' %}"><i
+                                        class="bi bi-gear me-2"></i>Admin</a></li>
+                            {% endif %}
+                            <li>
+                                <hr class="dropdown-divider" style="border-color: rgba(147, 51, 234, 0.3);">
+                            </li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:logout' %}"><i
+                                        class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="btn btn-outline-purple btn-sm me-2" href="{% url 'accounts:login' %}">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-purple btn-sm" href="{% url 'accounts:register' %}">Sign Up</a>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <button class="theme-toggle" id="themeToggle" title="Toggle Theme">
+                    <i class="bi bi-moon-fill"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    {% if messages %}
+    <div class="container mt-3">
+        {% for message in messages %}
+        <div class="alert alert-purple alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main class="container py-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <h5 class="text-white mb-3"><i class="bi bi-play-circle-fill me-2"
+                            style="color: var(--purple-light);"></i>NaughtyVerse</h5>
+                    <p class="text-secondary small">Your ultimate adult universe — where creators, fans, and premium
+                        content collide. Stream, discover, and dive into a world built for pleasure and freedom.</p>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <h6 class="text-white mb-3">Browse</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'videos:home' %}">Home</a></li>
+                        <li><a href="{% url 'videos:trending' %}">Trending</a></li>
+                        <li><a href="{% url 'videos:newest' %}">Newest</a></li>
+                        <li><a href="{% url 'videos:categories' %}">Categories</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <h6 class="text-white mb-3">Account</h6>
+                    <ul class="list-unstyled">
+                        {% if user.is_authenticated %}
+                        <li><a href="{% url 'accounts:profile' %}">Profile</a></li>
+                        <li><a href="{% url 'videos:user_history' %}">History</a></li>
+                        <li><a href="{% url 'videos:user_favorites' %}">Favorites</a></li>
+                        <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
+                        {% else %}
+                        <li><a href="{% url 'accounts:login' %}">Login</a></li>
+                        <li><a href="{% url 'accounts:register' %}">Register</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h6 class="text-white mb-3">Stay Connected</h6>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="fs-5"><i class="bi bi-twitter"></i></a>
+                        <a href="#" class="fs-5"><i class="bi bi-instagram"></i></a>
+                        <a href="#" class="fs-5"><i class="bi bi-telegram"></i></a>
+                        <a href="#" class="fs-5"><i class="bi bi-discord"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr style="border-color: rgba(147, 51, 234, 0.2);">
+            <div class="text-center text-secondary small">
+                &copy; 2024 NaughtyVerse. All rights reserved. | 18+ Only
+            </div>
+        </div>
+    </footer>
+
+    <!-- JSON-LD Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "NaughtyVerse",
+        "description": "Your ultimate adult universe. Stream premium adult content, explore diverse categories, and discover exclusive videos.",
+        "url": "{{ request.scheme }}://{{ request.get_host }}",
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": "{{ request.scheme }}://{{ request.get_host }}{% url 'videos:search' %}?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+        },
+        "genre": "Adult Entertainment",
+        "audience": {
+            "@type": "PeopleAudience",
+            "suggestedMinAge": 18
+        }
+    }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Theme Toggling Logic
+        const themeToggle = document.getElementById('themeToggle');
+        const icon = themeToggle.querySelector('i');
+        const html = document.documentElement;
+
+        // Check for saved theme preference
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        html.setAttribute('data-theme', savedTheme);
+        updateIcon(savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateIcon(newTheme);
+        });
+
+        function updateIcon(theme) {
+            if (theme === 'dark') {
+                icon.classList.remove('bi-sun-fill');
+                icon.classList.add('bi-moon-fill');
+            } else {
+                icon.classList.remove('bi-moon-fill');
+                icon.classList.add('bi-sun-fill');
+            }
+        }
+    </script>
+    <!-- Global Add to List Function -->
+    <script>
+    function addToList(videoId, source, title, thumbnail, duration, status) {
+        fetch('{% url "videos:add_to_list" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                video_id: videoId,
+                source: source,
+                title: title,
+                thumbnail: thumbnail,
+                duration: duration,
+                status: status
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // Show success toast
+                showToast(data.created ? 'Added to list!' : 'List updated!', 'success');
+            } else {
+                showToast(data.error || 'Failed to update list', 'danger');
+            }
+        })
+        .catch(err => {
+            showToast('Network error', 'danger');
+        });
+    }
+
+    function showToast(message, type) {
+        // Create toast container if it doesn't exist
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 9999;';
+            document.body.appendChild(container);
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} alert-dismissible fade show`;
+        toast.style.cssText = 'min-width: 200px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);';
+        toast.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        container.appendChild(toast);
+
+        // Auto-dismiss after 3 seconds
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 150);
+        }, 3000);
+    }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

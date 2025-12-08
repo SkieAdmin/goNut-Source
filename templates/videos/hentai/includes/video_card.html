@@ -1,0 +1,25 @@
+<div class="video-card h-100">
+    <a href="{% url 'videos:hentai_watch' video.slug %}" class="text-decoration-none">
+        <div class="video-thumbnail">
+            <img src="{{ video.cover_url }}" alt="{{ video.title }}" loading="lazy">
+            {% if video.duration and video.duration != '0:00' %}
+            <span class="video-duration">{{ video.duration }}</span>
+            {% endif %}
+            {% if not video.is_censored %}
+            <span class="video-quality" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);">UNCEN</span>
+            {% endif %}
+        </div>
+        <div class="video-info">
+            <h5 class="video-title">{{ video.title }}</h5>
+            <div class="video-meta d-flex justify-content-between">
+                <span><i class="bi bi-eye me-1"></i>{{ video.views|default:0 }}</span>
+                <span><i class="bi bi-heart me-1"></i>{{ video.likes|default:0 }}</span>
+            </div>
+            {% if video.brand %}
+            <div class="video-meta mt-1">
+                <small class="text-secondary"><i class="bi bi-building me-1"></i>{{ video.brand }}</small>
+            </div>
+            {% endif %}
+        </div>
+    </a>
+</div>

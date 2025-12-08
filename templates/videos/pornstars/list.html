@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Pornstars - StreamHub{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h1 class="section-title"><i class="bi bi-people-fill me-2" style="color: var(--purple-light);"></i>Popular Pornstars</h1>
+    <p class="text-secondary">Browse our collection of popular adult performers</p>
+</div>
+
+<div class="row g-3">
+    {% for star in pornstars %}
+    <div class="col-4 col-md-3 col-lg-2">
+        <a href="{% url 'videos:pornstar_detail' star.slug %}" class="text-decoration-none">
+            <div class="text-center pornstar-card p-3">
+                <div class="pornstar-avatar mx-auto mb-2">
+                    <img src="{{ star.avatar }}" alt="{{ star.name }}" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover; border: 3px solid {% if star.gender == 'male' %}#3b82f6{% else %}#ec4899{% endif %};">
+                </div>
+                <h6 class="mb-0 text-white text-truncate">{{ star.name }}</h6>
+                <small class="text-secondary">
+                    {% if star.gender == 'male' %}
+                    <i class="bi bi-gender-male" style="color: #3b82f6;"></i>
+                    {% else %}
+                    <i class="bi bi-gender-female" style="color: #ec4899;"></i>
+                    {% endif %}
+                </small>
+            </div>
+        </a>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-secondary">No pornstars found.</div>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+.pornstar-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+.pornstar-card:hover {
+    background: rgba(147, 51, 234, 0.1);
+    transform: translateY(-5px);
+}
+.pornstar-avatar img {
+    transition: transform 0.3s ease;
+}
+.pornstar-card:hover .pornstar-avatar img {
+    transform: scale(1.1);
+}
+</style>
+{% endblock %}

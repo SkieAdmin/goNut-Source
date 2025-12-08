@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Search: {{ query }} - StreamHub{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h1 class="section-title"><i class="bi bi-search me-2"></i>Search Results</h1>
+    {% if query %}
+    <p class="text-secondary">Showing results for "<strong class="text-white">{{ query }}</strong>" - {{ videos.count }} video{{ videos.count|pluralize }} found</p>
+    {% endif %}
+</div>
+
+{% if videos %}
+<div class="row g-3">
+    {% for video in videos %}
+    <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+        {% include 'videos/includes/video_card.html' %}
+    </div>
+    {% endfor %}
+</div>
+
+{% if page_obj.has_other_pages %}
+<nav class="mt-5">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">Previous</a></li>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ num }}">{{ num }}</a></li>
+            {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">Next</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-search display-1 text-secondary mb-3"></i>
+    {% if query %}
+    <h4 class="text-secondary">No results found for "{{ query }}"</h4>
+    <p class="text-muted">Try different keywords or browse our categories.</p>
+    {% else %}
+    <h4 class="text-secondary">Enter a search term</h4>
+    <p class="text-muted">Use the search box above to find videos.</p>
+    {% endif %}
+    <a href="{% url 'videos:categories' %}" class="btn btn-purple mt-3">Browse Categories</a>
+</div>
+{% endif %}
+{% endblock %}

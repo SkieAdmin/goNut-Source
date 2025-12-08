@@ -1,0 +1,18 @@
+<div class="video-card h-100">
+    <a href="{% url 'videos:redtube_watch' video.id %}?title={{ video.title|urlencode }}&thumb={{ video.thumb|urlencode }}&duration={{ video.duration|urlencode }}&views={{ video.views|default:0 }}&rating={{ video.rating|default:0 }}" class="text-decoration-none">
+        <div class="video-thumbnail">
+            <img src="{{ video.thumb }}" alt="{{ video.title }}" loading="lazy">
+            {% if video.duration %}
+            <span class="video-duration">{{ video.duration }}</span>
+            {% endif %}
+            <span class="video-quality" style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);">HD</span>
+        </div>
+        <div class="video-info">
+            <h5 class="video-title">{{ video.title }}</h5>
+            <div class="video-meta d-flex justify-content-between">
+                <span><i class="bi bi-eye me-1"></i>{{ video.views|default:0 }}</span>
+                <span><i class="bi bi-star me-1"></i>{{ video.rating|default:0 }}%</span>
+            </div>
+        </div>
+    </a>
+</div>

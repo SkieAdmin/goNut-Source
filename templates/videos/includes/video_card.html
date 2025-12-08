@@ -1,0 +1,25 @@
+{% load humanize %}
+<div class="video-card h-100">
+    <a href="{{ video.get_absolute_url }}" class="text-decoration-none">
+        <div class="video-thumbnail">
+            {% if video.thumbnail %}
+            <img src="{{ video.thumbnail.url }}" alt="{{ video.title }}" loading="lazy">
+            {% else %}
+            <div class="bg-secondary d-flex align-items-center justify-content-center h-100">
+                <i class="bi bi-film display-4 text-muted"></i>
+            </div>
+            {% endif %}
+            <span class="video-duration">{{ video.duration_formatted }}</span>
+            {% if video.quality %}
+            <span class="video-quality">{{ video.quality }}</span>
+            {% endif %}
+        </div>
+        <div class="video-info">
+            <h5 class="video-title">{{ video.title }}</h5>
+            <div class="video-meta d-flex justify-content-between">
+                <span><i class="bi bi-eye me-1"></i>{{ video.views|intcomma }}</span>
+                <span><i class="bi bi-hand-thumbs-up me-1"></i>{{ video.like_percentage }}%</span>
+            </div>
+        </div>
+    </a>
+</div>

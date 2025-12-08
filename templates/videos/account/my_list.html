@@ -1,0 +1,388 @@
+{% extends 'base.html' %}
+
+{% block title %}My List - NaughtyVerse{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-bar {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-box {
+        text-align: center;
+        padding: 0.5rem 1rem;
+        border-right: 1px solid rgba(147, 51, 234, 0.2);
+    }
+
+    .stat-box:last-child {
+        border-right: none;
+    }
+
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--purple-light);
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+    }
+
+    .filter-tabs {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-tab {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        background: var(--bg-card);
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+    }
+
+    .filter-tab:hover {
+        background: rgba(147, 51, 234, 0.2);
+        color: var(--purple-light);
+    }
+
+    .filter-tab.active {
+        background: var(--purple-primary);
+        color: white;
+    }
+
+    .list-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .list-table th {
+        background: var(--bg-card);
+        padding: 1rem;
+        text-align: left;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        border-bottom: 2px solid var(--purple-primary);
+    }
+
+    .list-table td {
+        padding: 1rem;
+        border-bottom: 1px solid rgba(147, 51, 234, 0.1);
+        vertical-align: middle;
+    }
+
+    .list-table tr:hover td {
+        background: rgba(147, 51, 234, 0.05);
+    }
+
+    .video-thumb-small {
+        width: 80px;
+        height: 45px;
+        object-fit: cover;
+        border-radius: 6px;
+    }
+
+    .score-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+
+    .score-10 { background: #22c55e; color: white; }
+    .score-9 { background: #84cc16; color: white; }
+    .score-8 { background: #eab308; color: black; }
+    .score-7 { background: #f97316; color: white; }
+    .score-6 { background: #ef4444; color: white; }
+    .score-low { background: #6b7280; color: white; }
+    .score-none { background: var(--bg-secondary); color: var(--text-secondary); }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-watching { background: #3b82f6; color: white; }
+    .status-completed { background: #22c55e; color: white; }
+    .status-on_hold { background: #eab308; color: black; }
+    .status-dropped { background: #ef4444; color: white; }
+    .status-plan_to_watch { background: #6b7280; color: white; }
+
+    .edit-btn {
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+
+    tr:hover .edit-btn {
+        opacity: 1;
+    }
+
+    .list-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .quick-score {
+        width: 60px;
+        padding: 0.25rem;
+        border-radius: 6px;
+        border: 1px solid rgba(147, 51, 234, 0.3);
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        text-align: center;
+    }
+
+    .quick-status {
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        border: 1px solid rgba(147, 51, 234, 0.3);
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="section-title mb-0"><i class="bi bi-list-ul me-2"></i>My List</h1>
+    <span class="badge bg-purple">{{ stats.total }} entries</span>
+</div>
+
+<!-- Stats Bar -->
+<div class="stats-bar">
+    <div class="d-flex justify-content-around flex-wrap">
+        <div class="stat-box">
+            <div class="stat-number">{{ stats.watching }}</div>
+            <div class="stat-label">Watching</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number">{{ stats.completed }}</div>
+            <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number">{{ stats.on_hold }}</div>
+            <div class="stat-label">On Hold</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number">{{ stats.dropped }}</div>
+            <div class="stat-label">Dropped</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number">{{ stats.plan_to_watch }}</div>
+            <div class="stat-label">Plan to Watch</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number">{{ stats.mean_score|floatformat:1 }}</div>
+            <div class="stat-label">Mean Score</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Tabs -->
+<div class="filter-tabs">
+    <a href="?status=all" class="filter-tab {% if current_status == 'all' %}active{% endif %}">All ({{ stats.total }})</a>
+    <a href="?status=watching" class="filter-tab {% if current_status == 'watching' %}active{% endif %}">Watching ({{ stats.watching }})</a>
+    <a href="?status=completed" class="filter-tab {% if current_status == 'completed' %}active{% endif %}">Completed ({{ stats.completed }})</a>
+    <a href="?status=on_hold" class="filter-tab {% if current_status == 'on_hold' %}active{% endif %}">On Hold ({{ stats.on_hold }})</a>
+    <a href="?status=dropped" class="filter-tab {% if current_status == 'dropped' %}active{% endif %}">Dropped ({{ stats.dropped }})</a>
+    <a href="?status=plan_to_watch" class="filter-tab {% if current_status == 'plan_to_watch' %}active{% endif %}">Plan to Watch ({{ stats.plan_to_watch }})</a>
+</div>
+
+<!-- Sort Options -->
+<div class="d-flex justify-content-end mb-3">
+    <select class="form-select form-select-sm" style="width: auto; background: var(--bg-card); border-color: rgba(147, 51, 234, 0.3);" onchange="window.location.href='?status={{ current_status }}&sort=' + this.value">
+        <option value="-updated_at" {% if current_sort == '-updated_at' %}selected{% endif %}>Last Updated</option>
+        <option value="-score" {% if current_sort == '-score' %}selected{% endif %}>Score (High to Low)</option>
+        <option value="score" {% if current_sort == 'score' %}selected{% endif %}>Score (Low to High)</option>
+        <option value="title" {% if current_sort == 'title' %}selected{% endif %}>Title (A-Z)</option>
+        <option value="-title" {% if current_sort == '-title' %}selected{% endif %}>Title (Z-A)</option>
+        <option value="-added_at" {% if current_sort == '-added_at' %}selected{% endif %}>Date Added</option>
+    </select>
+</div>
+
+<!-- List Table -->
+{% if entries %}
+<div class="table-responsive">
+    <table class="list-table">
+        <thead>
+            <tr>
+                <th style="width: 50px;">#</th>
+                <th style="width: 100px;">Image</th>
+                <th>Title</th>
+                <th style="width: 120px;">Status</th>
+                <th style="width: 80px;">Score</th>
+                <th style="width: 80px;">Source</th>
+                <th style="width: 100px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in entries %}
+            <tr data-video-id="{{ entry.video_id }}" data-source="{{ entry.source }}">
+                <td class="text-secondary">{{ forloop.counter }}</td>
+                <td>
+                    <a href="{% if entry.source == 'redtube' %}/redtube/watch/{{ entry.video_id }}/{% elif entry.source == 'hentai' %}/hentai/watch/{{ entry.video_id }}/{% else %}/watch/{{ entry.video_id }}/{% endif %}">
+                        <img src="{{ entry.thumbnail }}" alt="{{ entry.title }}" class="video-thumb-small">
+                    </a>
+                </td>
+                <td>
+                    <a href="{% if entry.source == 'redtube' %}/redtube/watch/{{ entry.video_id }}/{% elif entry.source == 'hentai' %}/hentai/watch/{{ entry.video_id }}/{% else %}/watch/{{ entry.video_id }}/{% endif %}" class="text-decoration-none text-white">
+                        <strong>{{ entry.title|truncatechars:60 }}</strong>
+                    </a>
+                    {% if entry.notes %}
+                    <br><small class="text-secondary"><i class="bi bi-journal-text me-1"></i>{{ entry.notes|truncatechars:50 }}</small>
+                    {% endif %}
+                </td>
+                <td>
+                    <select class="quick-status" onchange="updateStatus('{{ entry.video_id }}', '{{ entry.source }}', this.value)">
+                        {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if entry.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td>
+                    <input type="number" min="1" max="10" class="quick-score" value="{{ entry.score|default:'' }}"
+                           onchange="updateScore('{{ entry.video_id }}', '{{ entry.source }}', this.value)"
+                           placeholder="-">
+                </td>
+                <td>
+                    {% if entry.source == 'redtube' %}
+                    <span class="badge" style="background: #dc2626;">RT</span>
+                    {% elif entry.source == 'hentai' %}
+                    <span class="badge" style="background: #ec4899;">HT</span>
+                    {% else %}
+                    <span class="badge" style="background: #9333ea;">EP</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="list-actions">
+                        <button class="btn btn-sm btn-outline-danger edit-btn" onclick="removeFromList('{{ entry.video_id }}', '{{ entry.source }}')" title="Remove">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if has_next or has_prev %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if has_prev %}
+        <li class="page-item">
+            <a class="page-link" href="?status={{ current_status }}&sort={{ current_sort }}&page={{ entries.previous_page_number }}">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        </li>
+        {% endif %}
+        <li class="page-item active">
+            <span class="page-link">Page {{ entries.number }}</span>
+        </li>
+        {% if has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?status={{ current_status }}&sort={{ current_sort }}&page={{ entries.next_page_number }}">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-list-ul display-1 text-secondary mb-3"></i>
+    <h4 class="text-secondary">Your list is empty</h4>
+    <p class="text-muted">Start adding videos to your list while browsing!</p>
+    <a href="{% url 'videos:home' %}" class="btn btn-purple mt-3">Browse Videos</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateStatus(videoId, source, status) {
+    fetch('{% url "videos:update_list_entry" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            video_id: videoId,
+            source: source,
+            status: status
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            // Could show a toast notification here
+        }
+    });
+}
+
+function updateScore(videoId, source, score) {
+    fetch('{% url "videos:update_list_entry" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            video_id: videoId,
+            source: source,
+            score: score || null
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            // Could show a toast notification here
+        }
+    });
+}
+
+function removeFromList(videoId, source) {
+    if (!confirm('Remove this video from your list?')) return;
+
+    fetch('{% url "videos:remove_from_list" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            video_id: videoId,
+            source: source
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+</script>
+{% endblock %}

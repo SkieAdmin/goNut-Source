@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+
+{% block title %}StreamHub - Home{% endblock %}
+
+{% block content %}
+<!-- Featured Videos Carousel -->
+{% if featured_videos %}
+<div class="mb-5">
+    <div id="featuredCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner rounded-4 overflow-hidden" style="max-height: 400px;">
+            {% for video in featured_videos %}
+            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <a
+                    href="{% if video.watch_url %}{{ video.watch_url }}{% else %}{% url 'videos:watch' video.id %}{% endif %}">
+                    <div class="position-relative">
+                        <img src="{{ video.default_thumb.src }}" class="d-block w-100"
+                            style="height: 400px; object-fit: cover; filter: brightness(0.6);" alt="{{ video.title }}">
+                        <div class="position-absolute bottom-0 start-0 p-4 w-100"
+                            style="background: linear-gradient(transparent, rgba(0,0,0,0.9));">
+                            <span class="badge bg-danger mb-2">Featured</span>
+                            <h3 class="text-white mb-2">{{ video.title|truncatechars:60 }}</h3>
+                            <div class="d-flex gap-3 text-white-50">
+                                <span><i class="bi bi-eye me-1"></i>{{ video.views }}</span>
+                                <span><i class="bi bi-hand-thumbs-up me-1"></i>{{ video.rate }}%</span>
+                                <span><i class="bi bi-clock me-1"></i>{{ video.length_min }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#featuredCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#featuredCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+        </button>
+    </div>
+</div>
+{% endif %}
+
+<!-- Popular Pornstars Scroller (like beeg.com) -->
+{% if popular_pornstars %}
+<section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="section-title mb-0"><i class="bi bi-people-fill me-2" style="color: var(--purple-light);"></i>Popular
+            Stars</h2>
+        <a href="{% url 'videos:pornstars' %}" class="btn btn-outline-purple btn-sm">View All</a>
+    </div>
+    <div class="pornstar-scroller-wrapper position-relative">
+        <button class="scroller-btn scroller-btn-prev" onclick="scrollPornstars(-1)">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+        <div class="pornstar-scroller" id="pornstarScroller">
+            {% for star in popular_pornstars %}
+            <a href="{% url 'videos:pornstar_detail' star.slug %}" class="pornstar-item text-decoration-none">
+                <div class="pornstar-avatar-wrapper">
+                    <img src="{{ star.avatar }}" alt="{{ star.name }}" class="pornstar-avatar-img">
+                </div>
+                <span class="pornstar-name">{{ star.name|truncatechars:12 }}</span>
+            </a>
+            {% endfor %}
+        </div>
+        <button class="scroller-btn scroller-btn-next" onclick="scrollPornstars(1)">
+            <i class="bi bi-chevron-right"></i>
+        </button>
+    </div>
+</section>
+
+
+
+<script>
+    function scrollPornstars(direction) {
+        const scroller = document.getElementById('pornstarScroller');
+        const scrollAmount = 300;
+        scroller.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
+    }
+</script>
+{% endif %}
+
+<!-- Trending Videos -->
+{% if trending_videos %}
+<section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="section-title mb-0"><i class="bi bi-fire text-danger me-2"></i>Trending Now</h2>
+        <a href="{% url 'videos:trending' %}" class="btn btn-outline-purple btn-sm">View All</a>
+    </div>
+    <div class="row g-3">
+        {% for video in trending_videos %}
+        <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+            {% include 'videos/includes/video_card_api.html' %}
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Newest Videos -->
+{% if newest_videos %}
+<section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="section-title mb-0"><i class="bi bi-clock text-info me-2"></i>Just Added</h2>
+        <a href="{% url 'videos:newest' %}" class="btn btn-outline-purple btn-sm">View All</a>
+    </div>
+    <div class="row g-3">
+        {% for video in newest_videos %}
+        <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+            {% include 'videos/includes/video_card_api.html' %}
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Quick Access - Other Sections -->
+<section class="mb-5">
+    <h2 class="section-title mb-3"><i class="bi bi-collection-play me-2"></i>Explore More</h2>
+    <div class="row g-3">
+        <div class="col-6 col-md-4">
+            <a href="{% url 'videos:hentai_home' %}" class="text-decoration-none">
+                <div class="category-card py-4"
+                    style="border: 2px solid rgba(236, 72, 153, 0.3); background: linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, var(--bg-card) 100%);">
+                    <i class="bi bi-heart-fill fs-2 mb-2" style="color: #ec4899;"></i>
+                    <h5 class="mb-1" style="color: #ec4899;">Hentai</h5>
+                    <small class="text-secondary">Anime Adult Content</small>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-4">
+            <a href="{% url 'videos:redtube_home' %}" class="text-decoration-none">
+                <div class="category-card py-4"
+                    style="border: 2px solid rgba(220, 38, 38, 0.3); background: linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, var(--bg-card) 100%);">
+                    <i class="bi bi-play-btn-fill fs-2 mb-2" style="color: #dc2626;"></i>
+                    <h5 class="mb-1" style="color: #dc2626;">RedTube</h5>
+                    <small class="text-secondary">Premium Content</small>
+                </div>
+            </a>
+        </div>
+        <div class="col-12 col-md-4">
+            <a href="{% url 'videos:categories' %}" class="text-decoration-none">
+                <div class="category-card py-4" style="border: 2px solid rgba(147, 51, 234, 0.3);">
+                    <i class="bi bi-grid-3x3-gap fs-2 mb-2" style="color: var(--purple-light);"></i>
+                    <h5 class="mb-1" style="color: var(--purple-light);">Categories</h5>
+                    <small class="text-secondary">Browse All Categories</small>
+                </div>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Browse by Category -->
+<section>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="section-title mb-0"><i class="bi bi-grid-3x3-gap me-2"></i>Popular Categories</h2>
+        <a href="{% url 'videos:categories' %}" class="btn btn-outline-purple btn-sm">View All</a>
+    </div>
+    <div class="row g-3">
+        <div class="col-6 col-md-3 col-lg-2">
+            <a href="{% url 'videos:category' 'amateur' %}" class="text-decoration-none">
+                <div class="category-card py-3">
+                    <i class="bi bi-camera-video fs-3 mb-2" style="color: var(--purple-light);"></i>
+                    <h6 class="mb-0">Amateur</h6>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-3 col-lg-2">
+            <a href="{% url 'videos:category' 'asian' %}" class="text-decoration-none">
+                <div class="category-card py-3">
+                    <i class="bi bi-globe-asia-australia fs-3 mb-2" style="color: var(--purple-light);"></i>
+                    <h6 class="mb-0">Asian</h6>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-3 col-lg-2">
+            <a href="{% url 'videos:category' 'milf' %}" class="text-decoration-none">
+                <div class="category-card py-3">
+                    <i class="bi bi-award fs-3 mb-2" style="color: var(--purple-light);"></i>
+                    <h6 class="mb-0">MILF</h6>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-3 col-lg-2">
+            <a href="{% url 'videos:category' 'teen' %}" class="text-decoration-none">
+                <div class="category-card py-3">
+                    <i class="bi bi-person fs-3 mb-2" style="color: var(--purple-light);"></i>
+                    <h6 class="mb-0">Teen (18+)</h6>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-3 col-lg-2">
+            <a href="{% url 'videos:category' 'latina' %}" class="text-decoration-none">
+                <div class="category-card py-3">
+                    <i class="bi bi-sun fs-3 mb-2" style="color: var(--purple-light);"></i>
+                    <h6 class="mb-0">Latina</h6>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-3 col-lg-2">
+            <a href="{% url 'videos:category' 'lesbian' %}" class="text-decoration-none">
+                <div class="category-card py-3">
+                    <i class="bi bi-hearts fs-3 mb-2" style="color: var(--purple-light);"></i>
+                    <h6 class="mb-0">Lesbian</h6>
+                </div>
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

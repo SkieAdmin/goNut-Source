@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Search: {{ query }} - StreamHub{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h1 class="section-title"><i class="bi bi-search me-2"></i>Search Results</h1>
+    {% if query %}
+    <p class="text-secondary">Showing results for "<strong class="text-white">{{ query }}</strong>" - {{ total_count }} video{{ total_count|pluralize }} found</p>
+    {% endif %}
+</div>
+
+{% if videos %}
+<div class="row g-3">
+    {% for video in videos %}
+    <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+        {% include 'videos/includes/video_card_api.html' %}
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if has_next or has_prev %}
+<nav class="mt-5">
+    <ul class="pagination justify-content-center">
+        {% if has_prev %}
+        <li class="page-item">
+            <a class="page-link" href="?q={{ query }}&page={{ current_page|add:"-1" }}">
+                <i class="bi bi-chevron-left"></i> Previous
+            </a>
+        </li>
+        {% endif %}
+
+        <li class="page-item active">
+            <span class="page-link">Page {{ current_page }}</span>
+        </li>
+
+        {% if has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?q={{ query }}&page={{ current_page|add:"1" }}">
+                Next <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-search display-1 text-secondary mb-3"></i>
+    {% if query %}
+    <h4 class="text-secondary">No results found for "{{ query }}"</h4>
+    <p class="text-muted">Try different keywords or browse our categories.</p>
+    {% else %}
+    <h4 class="text-secondary">Enter a search term</h4>
+    <p class="text-muted">Use the search box above to find videos.</p>
+    {% endif %}
+    <a href="{% url 'videos:categories' %}" class="btn btn-purple mt-3">Browse Categories</a>
+</div>
+{% endif %}
+{% endblock %}

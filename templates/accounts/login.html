@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - StreamHub{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4">
+        <div class="card bg-dark border-0" style="background: var(--bg-card) !important; border-radius: 16px;">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <i class="bi bi-play-circle-fill display-4" style="color: var(--purple-light);"></i>
+                    <h3 class="mt-3">Welcome Back</h3>
+                    <p class="text-secondary">Sign in to your account</p>
+                </div>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0" style="border-color: rgba(147, 51, 234, 0.3);">
+                                <i class="bi bi-person" style="color: var(--purple-light);"></i>
+                            </span>
+                            <input type="text" name="username" class="form-control border-start-0" placeholder="Enter your username" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0" style="border-color: rgba(147, 51, 234, 0.3);">
+                                <i class="bi bi-lock" style="color: var(--purple-light);"></i>
+                            </span>
+                            <input type="password" name="password" class="form-control border-start-0" placeholder="Enter your password" required>
+                        </div>
+                    </div>
+
+                    {% if form.errors %}
+                    <div class="alert alert-danger py-2 mb-3">
+                        <small>Invalid username or password. Please try again.</small>
+                    </div>
+                    {% endif %}
+
+                    <button type="submit" class="btn btn-purple w-100 py-2 mb-3">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                    </button>
+
+                    <div class="text-center">
+                        <span class="text-secondary">Don't have an account?</span>
+                        <a href="{% url 'accounts:register' %}" style="color: var(--purple-light);">Sign up</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+<div class="video-card h-100">
+    <a href="{% if video.watch_url %}{{ video.watch_url }}{% else %}{% url 'videos:watch' video.id %}{% endif %}" class="text-decoration-none">
+        <div class="video-thumbnail">
+            <img src="{{ video.default_thumb.src }}" alt="{{ video.title }}" loading="lazy">
+            <span class="video-duration">{{ video.length_min }}</span>
+            {% if video.source == 'redtube' %}
+            <span class="video-source" style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);">RT</span>
+            {% else %}
+            <span class="video-source" style="background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);">EP</span>
+            {% endif %}
+            {% if user.is_authenticated %}
+            <div class="video-add-list dropdown" onclick="event.preventDefault(); event.stopPropagation();">
+                <button class="btn btn-sm" data-bs-toggle="dropdown" title="Add to List">
+                    <i class="bi bi-plus-lg"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark">
+                    <li><a class="dropdown-item" href="#" onclick="addToList('{{ video.id }}', '{{ video.source|default:"eporner" }}', '{{ video.title|escapejs }}', '{{ video.default_thumb.src }}', '{{ video.length_min }}', 'watching')"><i class="bi bi-play-circle me-2" style="color: #3b82f6;"></i>Watching</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="addToList('{{ video.id }}', '{{ video.source|default:"eporner" }}', '{{ video.title|escapejs }}', '{{ video.default_thumb.src }}', '{{ video.length_min }}', 'completed')"><i class="bi bi-check-circle me-2" style="color: #22c55e;"></i>Completed</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="addToList('{{ video.id }}', '{{ video.source|default:"eporner" }}', '{{ video.title|escapejs }}', '{{ video.default_thumb.src }}', '{{ video.length_min }}', 'plan_to_watch')"><i class="bi bi-clock me-2" style="color: #6b7280;"></i>Plan to Watch</a></li>
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        <div class="video-info">
+            <h5 class="video-title">{{ video.title }}</h5>
+            <div class="video-meta d-flex justify-content-between">
+                <span><i class="bi bi-eye me-1"></i>{{ video.views }}</span>
+                <span><i class="bi bi-hand-thumbs-up me-1"></i>{{ video.rate }}%</span>
+            </div>
+        </div>
+    </a>
+</div>

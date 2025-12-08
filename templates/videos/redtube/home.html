@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}RedTube - StreamHub{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="mb-5 p-4 rounded-4" style="background: linear-gradient(135deg, rgba(220, 38, 38, 0.2) 0%, rgba(147, 51, 234, 0.2) 100%); border: 1px solid rgba(220, 38, 38, 0.3);">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="mb-2"><i class="bi bi-play-btn-fill text-danger me-2"></i>RedTube</h1>
+            <p class="text-secondary mb-3">Premium adult content from RedTube</p>
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'videos:redtube_browse' %}" class="btn btn-danger"><i class="bi bi-collection me-1"></i>Browse All</a>
+                <a href="{% url 'videos:redtube_browse' %}?order=mostviewed" class="btn btn-outline-danger"><i class="bi bi-fire me-1"></i>Most Viewed</a>
+                <a href="{% url 'videos:redtube_browse' %}?order=rating" class="btn btn-outline-danger"><i class="bi bi-star me-1"></i>Top Rated</a>
+            </div>
+        </div>
+        <div class="col-md-4 text-end d-none d-md-block">
+            <form action="{% url 'videos:redtube_search' %}" method="GET" class="search-box">
+                <input type="text" name="q" placeholder="Search RedTube...">
+                <button type="submit"><i class="bi bi-search"></i></button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Trending Section -->
+{% if trending_videos %}
+<section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="section-title mb-0"><i class="bi bi-fire text-danger me-2"></i>Most Viewed This Week</h2>
+        <a href="{% url 'videos:redtube_browse' %}?order=mostviewed" class="btn btn-outline-danger btn-sm">View All</a>
+    </div>
+    <div class="row g-3">
+        {% for video in trending_videos %}
+        <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+            {% include 'videos/redtube/includes/video_card.html' %}
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Newest Section -->
+{% if newest_videos %}
+<section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="section-title mb-0"><i class="bi bi-clock text-info me-2"></i>Newest Videos</h2>
+        <a href="{% url 'videos:redtube_browse' %}?order=newest" class="btn btn-outline-danger btn-sm">View All</a>
+    </div>
+    <div class="row g-3">
+        {% for video in newest_videos %}
+        <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+            {% include 'videos/redtube/includes/video_card.html' %}
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,8 @@
+Django>=5.0
+Pillow>=10.0
+requests>=2.31
+redis>=5.0.0
+docker>=7.0.0
+
+# For PostgreSQL (uncomment when migrating)
+# psycopg2-binary>=2.9

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Categories - StreamHub{% endblock %}
+
+{% block content %}
+<h1 class="section-title"><i class="bi bi-grid-3x3-gap me-2"></i>All Categories</h1>
+
+<div class="row g-4">
+    {% for category in categories %}
+    <div class="col-6 col-md-4 col-lg-3">
+        <a href="{% url 'videos:category' category.slug %}" class="text-decoration-none">
+            <div class="category-card">
+                <div class="rounded-3 mb-3 mx-auto d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--bs-primary) 0%, var(--purple-dark) 100%);">
+                    <i class="{{ category.icon }} display-5 text-white"></i>
+                </div>
+                <h5>{{ category.name }}</h5>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

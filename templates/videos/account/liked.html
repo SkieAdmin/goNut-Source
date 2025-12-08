@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Liked Videos - StreamHub{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h1 class="section-title"><i class="bi bi-hand-thumbs-up-fill me-2" style="color: #22c55e;"></i>Liked Videos</h1>
+    <p class="text-secondary">Videos you've liked ({{ total_count }} total)</p>
+</div>
+
+{% if liked_videos %}
+<div class="row g-3">
+    {% for item in liked_videos %}
+    <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+        <div class="video-card h-100">
+            <a href="{% url 'videos:watch' item.video_id %}" class="text-decoration-none">
+                <div class="video-thumbnail">
+                    <div class="d-flex align-items-center justify-content-center h-100" style="background: var(--bg-card); min-height: 120px;">
+                        <i class="bi bi-play-circle display-4" style="color: var(--purple-light);"></i>
+                    </div>
+                    <span class="position-absolute top-0 end-0 m-2">
+                        <i class="bi bi-hand-thumbs-up-fill text-success"></i>
+                    </span>
+                </div>
+                <div class="video-info">
+                    <h5 class="video-title">Video {{ item.video_id|truncatechars:20 }}</h5>
+                    <div class="video-meta">
+                        <small class="text-secondary">
+                            <i class="bi bi-calendar me-1"></i>Liked {{ item.created_at|timesince }} ago
+                        </small>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if has_prev or has_next %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if has_prev %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ current_page|add:'-1' }}">
+                <i class="bi bi-chevron-left"></i> Previous
+            </a>
+        </li>
+        {% endif %}
+        <li class="page-item disabled">
+            <span class="page-link">Page {{ current_page }}</span>
+        </li>
+        {% if has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ current_page|add:'1' }}">
+                Next <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-hand-thumbs-up display-1 text-secondary mb-3"></i>
+    <h4 class="text-white">No liked videos yet</h4>
+    <p class="text-secondary">Like videos by clicking the thumbs up icon</p>
+    <a href="{% url 'videos:home' %}" class="btn btn-purple mt-2">
+        <i class="bi bi-play-circle me-1"></i>Browse Videos
+    </a>
+</div>
+{% endif %}
+{% endblock %}

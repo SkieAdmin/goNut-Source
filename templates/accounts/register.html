@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - StreamHub{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4">
+        <div class="card bg-dark border-0" style="background: var(--bg-card) !important; border-radius: 16px;">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <i class="bi bi-play-circle-fill display-4" style="color: var(--purple-light);"></i>
+                    <h3 class="mt-3">Create Account</h3>
+                    <p class="text-secondary">Join StreamHub today</p>
+                </div>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0" style="border-color: rgba(147, 51, 234, 0.3);">
+                                <i class="bi bi-person" style="color: var(--purple-light);"></i>
+                            </span>
+                            <input type="text" name="username" class="form-control border-start-0" placeholder="Choose a username" value="{{ form.username.value|default:'' }}" required>
+                        </div>
+                        {% if form.username.errors %}
+                        <small class="text-danger">{{ form.username.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0" style="border-color: rgba(147, 51, 234, 0.3);">
+                                <i class="bi bi-lock" style="color: var(--purple-light);"></i>
+                            </span>
+                            <input type="password" name="password1" class="form-control border-start-0" placeholder="Create a password" required>
+                        </div>
+                        {% if form.password1.errors %}
+                        <small class="text-danger">{{ form.password1.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Confirm Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0" style="border-color: rgba(147, 51, 234, 0.3);">
+                                <i class="bi bi-lock-fill" style="color: var(--purple-light);"></i>
+                            </span>
+                            <input type="password" name="password2" class="form-control border-start-0" placeholder="Confirm your password" required>
+                        </div>
+                        {% if form.password2.errors %}
+                        <small class="text-danger">{{ form.password2.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Gender</label>
+                        <div class="d-flex gap-4">
+                            <div class="form-check">
+                                <input type="radio" class="form-check-input" name="gender" id="genderMale" value="male" checked style="border-color: var(--purple-light);">
+                                <label class="form-check-label" for="genderMale">
+                                    <i class="bi bi-gender-male me-1" style="color: #3b82f6;"></i>Male
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input type="radio" class="form-check-input" name="gender" id="genderFemale" value="female" style="border-color: var(--purple-light);">
+                                <label class="form-check-label" for="genderFemale">
+                                    <i class="bi bi-gender-female me-1" style="color: #ec4899;"></i>Female
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Content Preference</label>
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <input type="radio" class="btn-check" name="preference" id="prefStraight" value="straight" checked>
+                                <label class="btn btn-outline-secondary w-100 py-2" for="prefStraight" style="border-color: rgba(147, 51, 234, 0.3);">
+                                    <i class="bi bi-heart d-block mb-1" style="color: var(--purple-light);"></i>
+                                    <small>Straight</small>
+                                </label>
+                            </div>
+                            <div class="col-4">
+                                <input type="radio" class="btn-check" name="preference" id="prefTrans" value="trans">
+                                <label class="btn btn-outline-secondary w-100 py-2" for="prefTrans" style="border-color: rgba(147, 51, 234, 0.3);">
+                                    <i class="bi bi-gender-trans d-block mb-1" style="color: #f472b6;"></i>
+                                    <small>Trans</small>
+                                </label>
+                            </div>
+                            <div class="col-4">
+                                <input type="radio" class="btn-check" name="preference" id="prefGay" value="gay">
+                                <label class="btn btn-outline-secondary w-100 py-2" for="prefGay" style="border-color: rgba(147, 51, 234, 0.3);">
+                                    <i class="bi bi-rainbow d-block mb-1" style="color: #22d3ee;"></i>
+                                    <small>Gay</small>
+                                </label>
+                            </div>
+                        </div>
+                        <small class="text-secondary mt-2 d-block">This affects default video recommendations</small>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="ageCheck" required style="background-color: transparent; border-color: var(--purple-light);">
+                            <label class="form-check-label text-secondary" for="ageCheck">
+                                I confirm that I am 18 years or older
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-purple w-100 py-2 mb-3">
+                        <i class="bi bi-person-plus me-2"></i>Create Account
+                    </button>
+
+                    <div class="text-center">
+                        <span class="text-secondary">Already have an account?</span>
+                        <a href="{% url 'accounts:login' %}" style="color: var(--purple-light);">Sign in</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

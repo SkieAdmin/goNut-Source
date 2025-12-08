@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Watch History - StreamHub{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h1 class="section-title"><i class="bi bi-clock-history me-2" style="color: var(--purple-light);"></i>Watch History</h1>
+    <p class="text-secondary">Your recently watched videos ({{ total_count }} total)</p>
+</div>
+
+{% if history %}
+<div class="row g-3">
+    {% for item in history %}
+    <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+        <div class="video-card h-100">
+            <a href="{% url 'videos:watch' item.video_id %}" class="text-decoration-none">
+                <div class="video-thumbnail">
+                    <img src="{{ item.thumbnail }}" alt="{{ item.title }}" loading="lazy">
+                    {% if item.duration %}
+                    <span class="video-duration">{{ item.duration }}</span>
+                    {% endif %}
+                </div>
+                <div class="video-info">
+                    <h5 class="video-title">{{ item.title|truncatechars:50 }}</h5>
+                    <div class="video-meta">
+                        <small class="text-secondary">
+                            <i class="bi bi-clock me-1"></i>{{ item.viewed_at|timesince }} ago
+                        </small>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if has_prev or has_next %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if has_prev %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ current_page|add:'-1' }}">
+                <i class="bi bi-chevron-left"></i> Previous
+            </a>
+        </li>
+        {% endif %}
+        <li class="page-item disabled">
+            <span class="page-link">Page {{ current_page }}</span>
+        </li>
+        {% if has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ current_page|add:'1' }}">
+                Next <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-clock-history display-1 text-secondary mb-3"></i>
+    <h4 class="text-white">No watch history yet</h4>
+    <p class="text-secondary">Start watching videos to build your history</p>
+    <a href="{% url 'videos:home' %}" class="btn btn-purple mt-2">
+        <i class="bi bi-play-circle me-1"></i>Browse Videos
+    </a>
+</div>
+{% endif %}
+{% endblock %}

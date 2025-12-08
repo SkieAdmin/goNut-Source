@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}Error - StreamHub{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <i class="bi bi-exclamation-triangle display-1 text-warning mb-3"></i>
+    <h2 class="mb-3">{{ message|default:"Something went wrong" }}</h2>
+    {% if details %}
+    <p class="text-secondary">{{ details }}</p>
+    {% else %}
+    <p class="text-secondary">The content you're looking for might have been removed or is temporarily unavailable.</p>
+    {% endif %}
+    <a href="{% url 'videos:home' %}" class="btn btn-purple mt-3">
+        <i class="bi bi-house me-2"></i>Back to Home
+    </a>
+</div>
+{% endblock %}
