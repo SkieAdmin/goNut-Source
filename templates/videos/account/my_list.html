@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}My List - NaughtyVerse{% endblock %}
+{% block title %}My List - goNuts{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -104,13 +104,40 @@
         font-size: 0.9rem;
     }
 
-    .score-10 { background: #22c55e; color: white; }
-    .score-9 { background: #84cc16; color: white; }
-    .score-8 { background: #eab308; color: black; }
-    .score-7 { background: #f97316; color: white; }
-    .score-6 { background: #ef4444; color: white; }
-    .score-low { background: #6b7280; color: white; }
-    .score-none { background: var(--bg-secondary); color: var(--text-secondary); }
+    .score-10 {
+        background: #22c55e;
+        color: white;
+    }
+
+    .score-9 {
+        background: #84cc16;
+        color: white;
+    }
+
+    .score-8 {
+        background: #eab308;
+        color: black;
+    }
+
+    .score-7 {
+        background: #f97316;
+        color: white;
+    }
+
+    .score-6 {
+        background: #ef4444;
+        color: white;
+    }
+
+    .score-low {
+        background: #6b7280;
+        color: white;
+    }
+
+    .score-none {
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+    }
 
     .status-badge {
         padding: 0.25rem 0.75rem;
@@ -119,11 +146,30 @@
         font-weight: 600;
     }
 
-    .status-watching { background: #3b82f6; color: white; }
-    .status-completed { background: #22c55e; color: white; }
-    .status-on_hold { background: #eab308; color: black; }
-    .status-dropped { background: #ef4444; color: white; }
-    .status-plan_to_watch { background: #6b7280; color: white; }
+    .status-watching {
+        background: #3b82f6;
+        color: white;
+    }
+
+    .status-completed {
+        background: #22c55e;
+        color: white;
+    }
+
+    .status-on_hold {
+        background: #eab308;
+        color: black;
+    }
+
+    .status-dropped {
+        background: #ef4444;
+        color: white;
+    }
+
+    .status-plan_to_watch {
+        background: #6b7280;
+        color: white;
+    }
 
     .edit-btn {
         opacity: 0;
@@ -198,23 +244,31 @@
 
 <!-- Filter Tabs -->
 <div class="filter-tabs">
-    <a href="?status=all" class="filter-tab {% if current_status == 'all' %}active{% endif %}">All ({{ stats.total }})</a>
-    <a href="?status=watching" class="filter-tab {% if current_status == 'watching' %}active{% endif %}">Watching ({{ stats.watching }})</a>
-    <a href="?status=completed" class="filter-tab {% if current_status == 'completed' %}active{% endif %}">Completed ({{ stats.completed }})</a>
-    <a href="?status=on_hold" class="filter-tab {% if current_status == 'on_hold' %}active{% endif %}">On Hold ({{ stats.on_hold }})</a>
-    <a href="?status=dropped" class="filter-tab {% if current_status == 'dropped' %}active{% endif %}">Dropped ({{ stats.dropped }})</a>
-    <a href="?status=plan_to_watch" class="filter-tab {% if current_status == 'plan_to_watch' %}active{% endif %}">Plan to Watch ({{ stats.plan_to_watch }})</a>
+    <a href="?status=all" class="filter-tab {% if current_status == 'all' %}active{% endif %}">All ({{ stats.total
+        }})</a>
+    <a href="?status=watching" class="filter-tab {% if current_status == 'watching' %}active{% endif %}">Watching ({{
+        stats.watching }})</a>
+    <a href="?status=completed" class="filter-tab {% if current_status == 'completed' %}active{% endif %}">Completed ({{
+        stats.completed }})</a>
+    <a href="?status=on_hold" class="filter-tab {% if current_status == 'on_hold' %}active{% endif %}">On Hold ({{
+        stats.on_hold }})</a>
+    <a href="?status=dropped" class="filter-tab {% if current_status == 'dropped' %}active{% endif %}">Dropped ({{
+        stats.dropped }})</a>
+    <a href="?status=plan_to_watch" class="filter-tab {% if current_status == 'plan_to_watch' %}active{% endif %}">Plan
+        to Watch ({{ stats.plan_to_watch }})</a>
 </div>
 
 <!-- Sort Options -->
 <div class="d-flex justify-content-end mb-3">
-    <select class="form-select form-select-sm" style="width: auto; background: var(--bg-card); border-color: rgba(147, 51, 234, 0.3);" onchange="window.location.href='?status={{ current_status }}&sort=' + this.value">
-        <option value="-updated_at" {% if current_sort == '-updated_at' %}selected{% endif %}>Last Updated</option>
-        <option value="-score" {% if current_sort == '-score' %}selected{% endif %}>Score (High to Low)</option>
-        <option value="score" {% if current_sort == 'score' %}selected{% endif %}>Score (Low to High)</option>
-        <option value="title" {% if current_sort == 'title' %}selected{% endif %}>Title (A-Z)</option>
-        <option value="-title" {% if current_sort == '-title' %}selected{% endif %}>Title (Z-A)</option>
-        <option value="-added_at" {% if current_sort == '-added_at' %}selected{% endif %}>Date Added</option>
+    <select class="form-select form-select-sm"
+        style="width: auto; background: var(--bg-card); border-color: rgba(147, 51, 234, 0.3);"
+        onchange="window.location.href='?status={{ current_status }}&sort=' + this.value">
+        <option value="-updated_at" {% if current_sort=='-updated_at' %}selected{% endif %}>Last Updated</option>
+        <option value="-score" {% if current_sort=='-score' %}selected{% endif %}>Score (High to Low)</option>
+        <option value="score" {% if current_sort=='score' %}selected{% endif %}>Score (Low to High)</option>
+        <option value="title" {% if current_sort=='title' %}selected{% endif %}>Title (A-Z)</option>
+        <option value="-title" {% if current_sort=='-title' %}selected{% endif %}>Title (Z-A)</option>
+        <option value="-added_at" {% if current_sort=='-added_at' %}selected{% endif %}>Date Added</option>
     </select>
 </div>
 
@@ -238,29 +292,33 @@
             <tr data-video-id="{{ entry.video_id }}" data-source="{{ entry.source }}">
                 <td class="text-secondary">{{ forloop.counter }}</td>
                 <td>
-                    <a href="{% if entry.source == 'redtube' %}/redtube/watch/{{ entry.video_id }}/{% elif entry.source == 'hentai' %}/hentai/watch/{{ entry.video_id }}/{% else %}/watch/{{ entry.video_id }}/{% endif %}">
+                    <a
+                        href="{% if entry.source == 'redtube' %}/redtube/watch/{{ entry.video_id }}/{% elif entry.source == 'hentai' %}/hentai/watch/{{ entry.video_id }}/{% else %}/watch/{{ entry.video_id }}/{% endif %}">
                         <img src="{{ entry.thumbnail }}" alt="{{ entry.title }}" class="video-thumb-small">
                     </a>
                 </td>
                 <td>
-                    <a href="{% if entry.source == 'redtube' %}/redtube/watch/{{ entry.video_id }}/{% elif entry.source == 'hentai' %}/hentai/watch/{{ entry.video_id }}/{% else %}/watch/{{ entry.video_id }}/{% endif %}" class="text-decoration-none text-white">
+                    <a href="{% if entry.source == 'redtube' %}/redtube/watch/{{ entry.video_id }}/{% elif entry.source == 'hentai' %}/hentai/watch/{{ entry.video_id }}/{% else %}/watch/{{ entry.video_id }}/{% endif %}"
+                        class="text-decoration-none text-white">
                         <strong>{{ entry.title|truncatechars:60 }}</strong>
                     </a>
                     {% if entry.notes %}
-                    <br><small class="text-secondary"><i class="bi bi-journal-text me-1"></i>{{ entry.notes|truncatechars:50 }}</small>
+                    <br><small class="text-secondary"><i class="bi bi-journal-text me-1"></i>{{
+                        entry.notes|truncatechars:50 }}</small>
                     {% endif %}
                 </td>
                 <td>
-                    <select class="quick-status" onchange="updateStatus('{{ entry.video_id }}', '{{ entry.source }}', this.value)">
+                    <select class="quick-status"
+                        onchange="updateStatus('{{ entry.video_id }}', '{{ entry.source }}', this.value)">
                         {% for value, label in status_choices %}
-                        <option value="{{ value }}" {% if entry.status == value %}selected{% endif %}>{{ label }}</option>
+                        <option value="{{ value }}" {% if entry.status==value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                 </td>
                 <td>
                     <input type="number" min="1" max="10" class="quick-score" value="{{ entry.score|default:'' }}"
-                           onchange="updateScore('{{ entry.video_id }}', '{{ entry.source }}', this.value)"
-                           placeholder="-">
+                        onchange="updateScore('{{ entry.video_id }}', '{{ entry.source }}', this.value)"
+                        placeholder="-">
                 </td>
                 <td>
                     {% if entry.source == 'redtube' %}
@@ -273,7 +331,8 @@
                 </td>
                 <td>
                     <div class="list-actions">
-                        <button class="btn btn-sm btn-outline-danger edit-btn" onclick="removeFromList('{{ entry.video_id }}', '{{ entry.source }}')" title="Remove">
+                        <button class="btn btn-sm btn-outline-danger edit-btn"
+                            onclick="removeFromList('{{ entry.video_id }}', '{{ entry.source }}')" title="Remove">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
@@ -290,7 +349,8 @@
     <ul class="pagination justify-content-center">
         {% if has_prev %}
         <li class="page-item">
-            <a class="page-link" href="?status={{ current_status }}&sort={{ current_sort }}&page={{ entries.previous_page_number }}">
+            <a class="page-link"
+                href="?status={{ current_status }}&sort={{ current_sort }}&page={{ entries.previous_page_number }}">
                 <i class="bi bi-chevron-left"></i>
             </a>
         </li>
@@ -300,7 +360,8 @@
         </li>
         {% if has_next %}
         <li class="page-item">
-            <a class="page-link" href="?status={{ current_status }}&sort={{ current_sort }}&page={{ entries.next_page_number }}">
+            <a class="page-link"
+                href="?status={{ current_status }}&sort={{ current_sort }}&page={{ entries.next_page_number }}">
                 <i class="bi bi-chevron-right"></i>
             </a>
         </li>
@@ -321,68 +382,68 @@
 
 {% block extra_js %}
 <script>
-function updateStatus(videoId, source, status) {
-    fetch('{% url "videos:update_list_entry" %}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}'
-        },
-        body: JSON.stringify({
-            video_id: videoId,
-            source: source,
-            status: status
+    function updateStatus(videoId, source, status) {
+        fetch('{% url "videos:update_list_entry" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                video_id: videoId,
+                source: source,
+                status: status
+            })
         })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            // Could show a toast notification here
-        }
-    });
-}
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    // Could show a toast notification here
+                }
+            });
+    }
 
-function updateScore(videoId, source, score) {
-    fetch('{% url "videos:update_list_entry" %}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}'
-        },
-        body: JSON.stringify({
-            video_id: videoId,
-            source: source,
-            score: score || null
+    function updateScore(videoId, source, score) {
+        fetch('{% url "videos:update_list_entry" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                video_id: videoId,
+                source: source,
+                score: score || null
+            })
         })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            // Could show a toast notification here
-        }
-    });
-}
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    // Could show a toast notification here
+                }
+            });
+    }
 
-function removeFromList(videoId, source) {
-    if (!confirm('Remove this video from your list?')) return;
+    function removeFromList(videoId, source) {
+        if (!confirm('Remove this video from your list?')) return;
 
-    fetch('{% url "videos:remove_from_list" %}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}'
-        },
-        body: JSON.stringify({
-            video_id: videoId,
-            source: source
+        fetch('{% url "videos:remove_from_list" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                video_id: videoId,
+                source: source
+            })
         })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        }
-    });
-}
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+    }
 </script>
 {% endblock %}

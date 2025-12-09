@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Edit Profile - NaughtyVerse{% endblock %}
+{% block title %}Edit Profile - goNuts{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -11,7 +11,8 @@
                     <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary btn-sm me-3">
                         <i class="bi bi-arrow-left"></i>
                     </a>
-                    <h4 class="mb-0"><i class="bi bi-person-gear me-2" style="color: var(--purple-light);"></i>Edit Profile</h4>
+                    <h4 class="mb-0"><i class="bi bi-person-gear me-2" style="color: var(--purple-light);"></i>Edit
+                        Profile</h4>
                 </div>
 
                 <form method="POST" enctype="multipart/form-data">
@@ -21,9 +22,11 @@
                     <div class="text-center mb-4">
                         <div class="position-relative d-inline-block">
                             {% if user.profile.avatar %}
-                            <img src="{{ user.profile.avatar.url }}" alt="Profile Picture" class="rounded-circle" style="width: 120px; height: 120px; object-fit: cover; border: 3px solid var(--purple-light);">
+                            <img src="{{ user.profile.avatar.url }}" alt="Profile Picture" class="rounded-circle"
+                                style="width: 120px; height: 120px; object-fit: cover; border: 3px solid var(--purple-light);">
                             {% else %}
-                            <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center" style="width: 120px; height: 120px; background: linear-gradient(135deg, var(--bs-primary) 0%, var(--purple-dark) 100%); font-size: 3rem; font-weight: 700; border: 3px solid var(--purple-light);">
+                            <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center"
+                                style="width: 120px; height: 120px; background: linear-gradient(135deg, var(--bs-primary) 0%, var(--purple-dark) 100%); font-size: 3rem; font-weight: 700; border: 3px solid var(--purple-light);">
                                 {{ user.username.0|upper }}
                             </div>
                             {% endif %}
@@ -33,7 +36,8 @@
                     <!-- Profile Picture Upload -->
                     <div class="mb-4">
                         <label class="form-label text-secondary">Profile Picture</label>
-                        <input type="file" name="avatar" class="form-control" accept="image/*" style="background: var(--bg-secondary); border-color: rgba(147, 51, 234, 0.3); color: var(--text-primary);">
+                        <input type="file" name="avatar" class="form-control" accept="image/*"
+                            style="background: var(--bg-secondary); border-color: rgba(147, 51, 234, 0.3); color: var(--text-primary);">
                         <small class="text-secondary">Recommended: Square image, at least 200x200 pixels</small>
                     </div>
 
@@ -62,7 +66,8 @@
                             {% for radio in profile_form.gender %}
                             <div class="form-check">
                                 {{ radio.tag }}
-                                <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                                <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label
+                                    }}</label>
                             </div>
                             {% endfor %}
                         </div>
@@ -75,7 +80,8 @@
                             {% for radio in profile_form.preference %}
                             <div class="form-check">
                                 {{ radio.tag }}
-                                <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                                <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label
+                                    }}</label>
                             </div>
                             {% endfor %}
                         </div>

@@ -1,2 +1,2 @@
 // Main JavaScript file
-console.log('NaughtyVerse loaded');
+console.log('goNuts loaded');
