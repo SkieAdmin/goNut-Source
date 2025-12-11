@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.views.decorators.http import require_POST
+from django.urls import reverse
 import json
 from .models import (
     Video, Category, Tag, Comment, VideoLike, Favorite, VideoView,
@@ -1156,6 +1157,10 @@ def upload_video_view(request):
     """Upload a new video"""
     if request.method == 'POST':
         form = VideoUploadForm(request.POST, request.FILES)
+
+        # Check if it's an AJAX request
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
         if form.is_valid():
             video = form.save(commit=False)
             video.uploader = request.user
@@ -1165,8 +1170,22 @@ def upload_video_view(request):
             # Re-save to trigger slug generation with actual ID
             video.save()
 
+            if is_ajax:
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Video uploaded successfully!',
+                    'redirect_url': reverse('videos:my_videos')
+                })
+
             messages.success(request, 'Video uploaded successfully!')
             return redirect('videos:my_videos')
+        else:
+            if is_ajax:
+                errors = {field: [str(e) for e in errs] for field, errs in form.errors.items()}
+                return JsonResponse({
+                    'success': False,
+                    'errors': errors
+                }, status=400)
     else:
         form = VideoUploadForm()
 

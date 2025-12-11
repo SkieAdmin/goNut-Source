@@ -449,15 +449,30 @@ uploadForm.addEventListener('submit', function(e) {
     });
 
     xhr.addEventListener('load', function() {
-        if (xhr.status === 200 || xhr.status === 302) {
-            // Success
-            showUploadSuccess();
-        } else {
-            // Check if it's a redirect (form submission success)
+        try {
+            const response = JSON.parse(xhr.responseText);
+            if (response.success) {
+                showUploadSuccess(response.redirect_url);
+            } else {
+                // Handle validation errors
+                let errorMsg = 'Validation error';
+                if (response.errors) {
+                    const firstError = Object.values(response.errors)[0];
+                    if (firstError && firstError.length > 0) {
+                        errorMsg = firstError[0];
+                    }
+                }
+                showUploadError(errorMsg);
+            }
+        } catch (e) {
+            // If response is not JSON, check if redirect happened (success)
             if (xhr.responseURL && xhr.responseURL.includes('my-videos')) {
                 showUploadSuccess();
+            } else if (xhr.status === 200) {
+                // Might be HTML response after redirect
+                showUploadSuccess();
             } else {
-                showUploadError('Server returned an error. Please try again.');
+                showUploadError('Server returned an unexpected response.');
             }
         }
     });
@@ -470,11 +485,17 @@ uploadForm.addEventListener('submit', function(e) {
         showUploadError('Upload was cancelled.');
     });
 
+    xhr.addEventListener('timeout', function() {
+        showUploadError('Upload timed out. Please try again.');
+    });
+
     xhr.open('POST', uploadForm.action || window.location.href);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.timeout = 600000; // 10 minute timeout
     xhr.send(formData);
 });
 
-function showUploadSuccess() {
+function showUploadSuccess(redirectUrl) {
     document.getElementById('uploadStatusTitle').style.display = 'none';
     document.getElementById('uploadStatusText').style.display = 'none';
     document.getElementById('uploadStats').style.display = 'none';
@@ -484,7 +505,7 @@ function showUploadSuccess() {
 
     // Redirect after 2 seconds
     setTimeout(() => {
-        window.location.href = '{% url "videos:my_videos" %}';
+        window.location.href = redirectUrl || '{% url "videos:my_videos" %}';
     }, 2000);
 }
 
