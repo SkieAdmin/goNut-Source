@@ -40,14 +40,22 @@ class ProfileUpdateForm(forms.ModelForm):
 
     class Meta:
         model = UserProfile
-        fields = ['avatar', 'gender', 'preference']
+        fields = ['avatar', 'bio', 'gender', 'preference', 'list_is_public', 'show_favorites', 'show_stats']
         widgets = {
             'gender': forms.RadioSelect(attrs={'class': 'form-check-input'}),
             'preference': forms.RadioSelect(attrs={'class': 'form-check-input'}),
+            'bio': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Tell us about yourself...'}),
+            'list_is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'show_favorites': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'show_stats': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
         labels = {
             'avatar': 'Profile Picture',
+            'bio': 'Bio',
             'preference': 'Content Preference',
+            'list_is_public': 'Make my video list public',
+            'show_favorites': 'Show favorites on public profile',
+            'show_stats': 'Show list statistics on public profile',
         }
 
 

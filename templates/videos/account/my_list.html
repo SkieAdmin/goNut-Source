@@ -263,12 +263,12 @@
     <select class="form-select form-select-sm"
         style="width: auto; background: var(--bg-card); border-color: rgba(147, 51, 234, 0.3);"
         onchange="window.location.href='?status={{ current_status }}&sort=' + this.value">
-        <option value="-updated_at" {% if current_sort=='-updated_at' %}selected{% endif %}>Last Updated</option>
-        <option value="-score" {% if current_sort=='-score' %}selected{% endif %}>Score (High to Low)</option>
-        <option value="score" {% if current_sort=='score' %}selected{% endif %}>Score (Low to High)</option>
-        <option value="title" {% if current_sort=='title' %}selected{% endif %}>Title (A-Z)</option>
-        <option value="-title" {% if current_sort=='-title' %}selected{% endif %}>Title (Z-A)</option>
-        <option value="-added_at" {% if current_sort=='-added_at' %}selected{% endif %}>Date Added</option>
+        <option value="-updated_at" {% if current_sort == '-updated_at' %}selected{% endif %}>Last Updated</option>
+        <option value="-score" {% if current_sort == '-score' %}selected{% endif %}>Score (High to Low)</option>
+        <option value="score" {% if current_sort == 'score' %}selected{% endif %}>Score (Low to High)</option>
+        <option value="title" {% if current_sort == 'title' %}selected{% endif %}>Title (A-Z)</option>
+        <option value="-title" {% if current_sort == '-title' %}selected{% endif %}>Title (Z-A)</option>
+        <option value="-added_at" {% if current_sort == '-added_at' %}selected{% endif %}>Date Added</option>
     </select>
 </div>
 
@@ -311,7 +311,7 @@
                     <select class="quick-status"
                         onchange="updateStatus('{{ entry.video_id }}', '{{ entry.source }}', this.value)">
                         {% for value, label in status_choices %}
-                        <option value="{{ value }}" {% if entry.status==value %}selected{% endif %}>{{ label }}</option>
+                        <option value="{{ value }}" {% if entry.status == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                 </td>

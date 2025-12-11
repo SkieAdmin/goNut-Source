@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ profile_user.username }}'s Profile - {{ site_name }}{% endblock %}
+{% block meta_description %}View {{ profile_user.username }}'s video list and profile on {{ site_name }}. {{ list_stats.total }} videos in their collection.{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <!-- Profile Card -->
+        <div class="card bg-dark border-0" style="border-radius: 16px; overflow: hidden;">
+            <div class="card-body text-center p-4">
+                <!-- Avatar -->
+                <div class="mb-3">
+                    {% if profile.avatar %}
+                    <img src="{{ profile.avatar.url }}" alt="{{ profile_user.username }}"
+                         class="rounded-circle" style="width: 120px; height: 120px; object-fit: cover; border: 3px solid var(--purple-light);">
+                    {% else %}
+                    <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center"
+                         style="width: 120px; height: 120px; background: linear-gradient(135deg, var(--purple-primary) 0%, var(--purple-dark) 100%); font-size: 3rem; color: white;">
+                        {{ profile_user.username.0|upper }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <h3 class="mb-1">{{ profile_user.username }}</h3>
+                <p class="text-secondary mb-3">Member since {{ profile_user.date_joined|date:"M Y" }}</p>
+
+                {% if profile.bio %}
+                <p class="text-secondary small mb-3">{{ profile.bio }}</p>
+                {% endif %}
+
+                {% if is_own_profile %}
+                <a href="{% url 'accounts:edit_profile' %}" class="btn btn-outline-purple btn-sm">
+                    <i class="bi bi-pencil me-1"></i>Edit Profile
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Share Link -->
+        {% if is_own_profile %}
+        <div class="card bg-dark border-0 mt-3" style="border-radius: 12px;">
+            <div class="card-body">
+                <h6 class="mb-2"><i class="bi bi-share me-2"></i>Share Your Profile</h6>
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control" id="profileUrl"
+                           value="{{ request.scheme }}://{{ request.get_host }}{% url 'accounts:public_profile' profile_user.username %}" readonly
+                           style="background: var(--bg-secondary); border-color: rgba(147, 51, 234, 0.3);">
+                    <button class="btn btn-purple" onclick="copyProfileUrl()">
+                        <i class="bi bi-clipboard"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-8">
+        <!-- Stats Card -->
+        {% if list_stats %}
+        <div class="card bg-dark border-0 mb-4" style="border-radius: 16px;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart me-2" style="color: var(--purple-light);"></i>List Statistics</h5>
+                    {% if profile.list_is_public %}
+                    <a href="{% url 'accounts:public_list' profile_user.username %}" class="btn btn-purple btn-sm">
+                        View Full List <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                    {% endif %}
+                </div>
+
+                <div class="row text-center g-3">
+                    <div class="col-4 col-md-2">
+                        <div class="stat-number text-primary">{{ list_stats.watching }}</div>
+                        <div class="stat-label small text-secondary">Watching</div>
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <div class="stat-number text-success">{{ list_stats.completed }}</div>
+                        <div class="stat-label small text-secondary">Completed</div>
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <div class="stat-number text-warning">{{ list_stats.on_hold }}</div>
+                        <div class="stat-label small text-secondary">On Hold</div>
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <div class="stat-number text-danger">{{ list_stats.dropped }}</div>
+                        <div class="stat-label small text-secondary">Dropped</div>
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <div class="stat-number text-secondary">{{ list_stats.plan_to_watch }}</div>
+                        <div class="stat-label small text-secondary">Plan to Watch</div>
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <div class="stat-number" style="color: var(--purple-light);">{{ list_stats.mean_score|floatformat:1 }}</div>
+                        <div class="stat-label small text-secondary">Mean Score</div>
+                    </div>
+                </div>
+
+                <div class="mt-3 pt-3 border-top" style="border-color: rgba(147, 51, 234, 0.2) !important;">
+                    <div class="d-flex justify-content-around text-center">
+                        <div>
+                            <strong class="text-white">{{ list_stats.total }}</strong>
+                            <span class="text-secondary small">Total Entries</span>
+                        </div>
+                        <div>
+                            <strong class="text-white">{{ list_stats.scored_count }}</strong>
+                            <span class="text-secondary small">Scored</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Recent List Updates -->
+        {% if recent_list_entries %}
+        <div class="card bg-dark border-0 mb-4" style="border-radius: 16px;">
+            <div class="card-body">
+                <h5 class="mb-3"><i class="bi bi-clock-history me-2" style="color: var(--purple-light);"></i>Recent List Updates</h5>
+
+                <div class="row g-3">
+                    {% for entry in recent_list_entries %}
+                    <div class="col-6 col-md-4">
+                        <a href="{% if entry.source == 'redtube' %}/redtube/watch/{{ entry.video_id }}/{% elif entry.source == 'hentai' %}/hentai/watch/{{ entry.video_id }}/{% else %}/watch/{{ entry.video_id }}/{% endif %}"
+                           class="text-decoration-none">
+                            <div class="position-relative" style="border-radius: 8px; overflow: hidden;">
+                                <img src="{{ entry.thumbnail }}" alt="{{ entry.title }}"
+                                     style="width: 100%; aspect-ratio: 16/9; object-fit: cover;">
+                                {% if entry.score %}
+                                <span class="position-absolute top-0 end-0 badge bg-success m-2">{{ entry.score }}</span>
+                                {% endif %}
+                                <span class="position-absolute bottom-0 start-0 badge m-2
+                                    {% if entry.status == 'watching' %}bg-primary
+                                    {% elif entry.status == 'completed' %}bg-success
+                                    {% elif entry.status == 'on_hold' %}bg-warning text-dark
+                                    {% elif entry.status == 'dropped' %}bg-danger
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ entry.get_status_display }}
+                                </span>
+                            </div>
+                            <p class="text-white small mt-2 mb-0" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                {{ entry.title }}
+                            </p>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Recent Favorites -->
+        {% if recent_favorites %}
+        <div class="card bg-dark border-0" style="border-radius: 16px;">
+            <div class="card-body">
+                <h5 class="mb-3"><i class="bi bi-heart me-2" style="color: #ec4899;"></i>Favorites</h5>
+
+                <div class="row g-3">
+                    {% for fav in recent_favorites %}
+                    <div class="col-6 col-md-4">
+                        <a href="{% if fav.source == 'redtube' %}/redtube/watch/{{ fav.video_id }}/{% elif fav.source == 'hentai' %}/hentai/watch/{{ fav.video_id }}/{% else %}/watch/{{ fav.video_id }}/{% endif %}"
+                           class="text-decoration-none">
+                            <div style="border-radius: 8px; overflow: hidden;">
+                                <img src="{{ fav.thumbnail }}" alt="{{ fav.title }}"
+                                     style="width: 100%; aspect-ratio: 16/9; object-fit: cover;">
+                            </div>
+                            <p class="text-white small mt-2 mb-0" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                {{ fav.title }}
+                            </p>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Empty State -->
+        {% if not list_stats and not recent_favorites %}
+        <div class="text-center py-5">
+            <i class="bi bi-person display-1 text-secondary mb-3"></i>
+            <h4 class="text-secondary">No public content</h4>
+            <p class="text-muted">This user hasn't made their list or favorites public.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if is_own_profile %}
+<script>
+function copyProfileUrl() {
+    const input = document.getElementById('profileUrl');
+    input.select();
+    document.execCommand('copy');
+
+    // Show feedback
+    const btn = event.target.closest('button');
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-check"></i>';
+    setTimeout(() => btn.innerHTML = originalHtml, 2000);
+}
+</script>
+{% endif %}
+{% endblock %}

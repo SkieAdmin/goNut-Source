@@ -1,8 +1,11 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout, update_session_auth_hash
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.contrib import messages
+from django.core.paginator import Paginator
+from django.http import Http404
 from videos.models import Favorite, Playlist, APIVideoView, APIVideoFavorite, APIVideoLike, VideoList
 from .forms import CustomUserCreationForm, ProfileUpdateForm, UserUpdateForm, CustomPasswordChangeForm
 from .models import UserProfile
@@ -121,3 +124,83 @@ def change_password_view(request):
         form = CustomPasswordChangeForm(request.user)
 
     return render(request, 'accounts/change_password.html', {'form': form})
+
+
+def public_profile_view(request, username):
+    """View a user's public profile"""
+    profile_user = get_object_or_404(User, username=username)
+    profile, _ = UserProfile.objects.get_or_create(user=profile_user)
+
+    # Get list stats if user allows it
+    list_stats = None
+    recent_list_entries = []
+    if profile.show_stats:
+        list_stats = VideoList.get_user_stats(profile_user)
+        if profile.list_is_public:
+            recent_list_entries = VideoList.objects.filter(user=profile_user).order_by('-updated_at')[:6]
+
+    # Get favorites if user allows it
+    recent_favorites = []
+    if profile.show_favorites:
+        recent_favorites = APIVideoFavorite.objects.filter(user=profile_user).order_by('-created_at')[:6]
+
+    # Check if viewing own profile
+    is_own_profile = request.user == profile_user
+
+    context = {
+        'profile_user': profile_user,
+        'profile': profile,
+        'list_stats': list_stats,
+        'recent_list_entries': recent_list_entries,
+        'recent_favorites': recent_favorites,
+        'is_own_profile': is_own_profile,
+    }
+    return render(request, 'accounts/public_profile.html', context)
+
+
+def public_list_view(request, username):
+    """View a user's public video list (MyAnimeList style)"""
+    profile_user = get_object_or_404(User, username=username)
+    profile, _ = UserProfile.objects.get_or_create(user=profile_user)
+
+    # Check if list is public
+    is_own_list = request.user == profile_user
+    if not profile.list_is_public and not is_own_list:
+        raise Http404("This user's list is private.")
+
+    # Get filter and sort params
+    status_filter = request.GET.get('status', 'all')
+    sort_by = request.GET.get('sort', '-updated_at')
+
+    # Get list entries
+    entries = VideoList.objects.filter(user=profile_user)
+    if status_filter != 'all':
+        entries = entries.filter(status=status_filter)
+
+    # Sorting
+    valid_sorts = ['-updated_at', '-score', 'score', 'title', '-title', '-added_at']
+    if sort_by in valid_sorts:
+        entries = entries.order_by(sort_by)
+
+    # Get stats
+    stats = VideoList.get_user_stats(profile_user)
+
+    # Pagination
+    paginator = Paginator(entries, 25)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'profile_user': profile_user,
+        'profile': profile,
+        'entries': page_obj,
+        'stats': stats,
+        'current_status': status_filter,
+        'current_sort': sort_by,
+        'status_choices': VideoList.STATUS_CHOICES,
+        'is_own_list': is_own_list,
+        'total_count': paginator.count,
+        'has_next': page_obj.has_next(),
+        'has_prev': page_obj.has_previous(),
+    }
+    return render(request, 'accounts/public_list.html', context)

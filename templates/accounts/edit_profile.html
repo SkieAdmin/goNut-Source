@@ -88,6 +88,53 @@
                         <small class="text-secondary">This affects the type of content shown to you</small>
                     </div>
 
+                    <!-- Bio -->
+                    <div class="mb-4">
+                        <label class="form-label text-secondary">Bio</label>
+                        {{ profile_form.bio }}
+                        <small class="text-secondary">Max 500 characters. Displayed on your public profile.</small>
+                    </div>
+
+                    <!-- Privacy Settings Section -->
+                    <div class="mb-4 p-3 rounded" style="background: rgba(147, 51, 234, 0.1); border: 1px solid rgba(147, 51, 234, 0.3);">
+                        <h6 class="mb-3"><i class="bi bi-shield-lock me-2" style="color: var(--purple-light);"></i>Privacy Settings</h6>
+
+                        <div class="form-check mb-2">
+                            {{ profile_form.list_is_public }}
+                            <label class="form-check-label" for="{{ profile_form.list_is_public.id_for_label }}">
+                                Make my video list public
+                            </label>
+                            <small class="d-block text-secondary ms-4">Others can view your list at /accounts/u/{{ user.username }}/list/</small>
+                        </div>
+
+                        <div class="form-check mb-2">
+                            {{ profile_form.show_stats }}
+                            <label class="form-check-label" for="{{ profile_form.show_stats.id_for_label }}">
+                                Show list statistics on public profile
+                            </label>
+                        </div>
+
+                        <div class="form-check">
+                            {{ profile_form.show_favorites }}
+                            <label class="form-check-label" for="{{ profile_form.show_favorites.id_for_label }}">
+                                Show favorites on public profile
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Share Link Preview -->
+                    <div class="mb-4">
+                        <label class="form-label text-secondary">Your Public Profile Link</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="profileUrl"
+                                   value="{{ request.scheme }}://{{ request.get_host }}{% url 'accounts:public_profile' user.username %}" readonly
+                                   style="background: var(--bg-secondary); border-color: rgba(147, 51, 234, 0.3);">
+                            <button type="button" class="btn btn-outline-purple" onclick="copyUrl()">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="d-flex gap-3">
                         <button type="submit" class="btn btn-purple">
                             <i class="bi bi-check-lg me-1"></i>Save Changes
@@ -99,4 +146,17 @@
         </div>
     </div>
 </div>
+
+<script>
+function copyUrl() {
+    const input = document.getElementById('profileUrl');
+    input.select();
+    document.execCommand('copy');
+
+    const btn = event.target.closest('button');
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-check"></i>';
+    setTimeout(() => btn.innerHTML = originalHtml, 2000);
+}
+</script>
 {% endblock %}

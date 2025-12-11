@@ -20,8 +20,15 @@ class UserProfile(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
+    bio = models.TextField(max_length=500, blank=True)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='male')
     preference = models.CharField(max_length=10, choices=PREFERENCE_CHOICES, default='straight')
+
+    # Privacy settings
+    list_is_public = models.BooleanField(default=True, help_text='Allow others to see your video list')
+    show_favorites = models.BooleanField(default=False, help_text='Show favorites on public profile')
+    show_stats = models.BooleanField(default=True, help_text='Show list statistics on public profile')
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
