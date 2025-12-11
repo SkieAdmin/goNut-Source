@@ -36,17 +36,22 @@
     }
 
     .form-control, .form-select {
-        background: var(--bg-secondary);
+        background: var(--bg-card);
         border: 1px solid rgba(147, 51, 234, 0.3);
         color: var(--text-primary);
         border-radius: 8px;
     }
 
     .form-control:focus, .form-select:focus {
-        background: var(--bg-secondary);
+        background: var(--bg-card);
         border-color: var(--purple-light);
         color: var(--text-primary);
         box-shadow: 0 0 0 0.2rem rgba(147, 51, 234, 0.25);
+    }
+
+    .form-select option {
+        background: var(--bg-card);
+        color: var(--text-primary);
     }
 
     .form-text {
@@ -220,6 +225,90 @@
     </div>
 </div>
 
+<!-- Upload Progress Modal -->
+<div class="modal fade" id="uploadProgressModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: var(--bg-card); border: 2px solid rgba(147, 51, 234, 0.3); border-radius: 16px;">
+            <div class="modal-body text-center p-4">
+                <div class="mb-4">
+                    <div class="upload-icon-container">
+                        <i class="bi bi-cloud-upload" style="font-size: 3rem; color: var(--purple-light);"></i>
+                    </div>
+                </div>
+
+                <h4 class="text-white mb-2" id="uploadStatusTitle">Uploading Video...</h4>
+                <p class="text-secondary mb-4" id="uploadStatusText">Please wait while your video is being uploaded</p>
+
+                <!-- Progress Bar -->
+                <div class="progress mb-3" style="height: 12px; background: var(--bg-secondary); border-radius: 6px;">
+                    <div class="progress-bar" id="uploadProgressBar" role="progressbar"
+                         style="width: 0%; background: linear-gradient(90deg, #9333ea, #ec4899); border-radius: 6px; transition: width 0.3s ease;">
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between text-secondary small mb-3">
+                    <span id="uploadedSize">0 MB</span>
+                    <span id="uploadPercent">0%</span>
+                    <span id="totalSize">0 MB</span>
+                </div>
+
+                <!-- Upload Stats -->
+                <div class="upload-stats" style="display: none;" id="uploadStats">
+                    <div class="d-flex justify-content-center gap-4 text-secondary small">
+                        <span><i class="bi bi-speedometer2 me-1"></i><span id="uploadSpeed">0 MB/s</span></span>
+                        <span><i class="bi bi-clock me-1"></i><span id="uploadETA">Calculating...</span></span>
+                    </div>
+                </div>
+
+                <!-- Success State -->
+                <div id="uploadSuccess" style="display: none;">
+                    <i class="bi bi-check-circle-fill" style="font-size: 4rem; color: #22c55e;"></i>
+                    <h4 class="text-white mt-3">Upload Complete!</h4>
+                    <p class="text-secondary">Redirecting to your videos...</p>
+                </div>
+
+                <!-- Error State -->
+                <div id="uploadError" style="display: none;">
+                    <i class="bi bi-x-circle-fill" style="font-size: 4rem; color: #ef4444;"></i>
+                    <h4 class="text-white mt-3">Upload Failed</h4>
+                    <p class="text-secondary" id="uploadErrorMsg">An error occurred during upload</p>
+                    <button class="btn btn-outline-purple mt-2" onclick="closeUploadModal()">Try Again</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .upload-icon-container {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto;
+        background: rgba(147, 51, 234, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.05); opacity: 0.8; }
+    }
+
+    .progress-bar {
+        background: linear-gradient(90deg, #9333ea, #ec4899, #9333ea);
+        background-size: 200% 100%;
+        animation: shimmer 2s linear infinite;
+    }
+
+    @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+</style>
+
 <script>
 // Hide native file inputs
 document.querySelectorAll('.file-upload-zone input[type="file"]').forEach(input => {
@@ -290,5 +379,131 @@ thumbInput.addEventListener('change', function() {
         }
     });
 });
+
+// Upload Progress Handling
+const uploadForm = document.getElementById('uploadForm');
+let uploadModal;
+let uploadStartTime;
+
+uploadForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const videoFile = formData.get('video_file');
+
+    if (!videoFile || !videoFile.size) {
+        alert('Please select a video file');
+        return;
+    }
+
+    // Show progress modal
+    uploadModal = new bootstrap.Modal(document.getElementById('uploadProgressModal'), {
+        backdrop: 'static',
+        keyboard: false
+    });
+    uploadModal.show();
+
+    // Reset modal state
+    document.getElementById('uploadSuccess').style.display = 'none';
+    document.getElementById('uploadError').style.display = 'none';
+    document.getElementById('uploadStatusTitle').style.display = 'block';
+    document.getElementById('uploadStatusText').style.display = 'block';
+    document.getElementById('uploadStats').style.display = 'block';
+    document.querySelector('.upload-icon-container').style.display = 'flex';
+    document.querySelector('.progress').style.display = 'flex';
+
+    // Set total size
+    const totalSizeMB = (videoFile.size / (1024 * 1024)).toFixed(2);
+    document.getElementById('totalSize').textContent = totalSizeMB + ' MB';
+
+    uploadStartTime = Date.now();
+
+    // Create XMLHttpRequest for progress tracking
+    const xhr = new XMLHttpRequest();
+
+    xhr.upload.addEventListener('progress', function(e) {
+        if (e.lengthComputable) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            const loadedMB = (e.loaded / (1024 * 1024)).toFixed(2);
+
+            // Update progress bar
+            document.getElementById('uploadProgressBar').style.width = percent + '%';
+            document.getElementById('uploadPercent').textContent = percent + '%';
+            document.getElementById('uploadedSize').textContent = loadedMB + ' MB';
+
+            // Calculate speed and ETA
+            const elapsedTime = (Date.now() - uploadStartTime) / 1000; // seconds
+            const speed = e.loaded / elapsedTime; // bytes per second
+            const speedMB = (speed / (1024 * 1024)).toFixed(2);
+            const remainingBytes = e.total - e.loaded;
+            const etaSeconds = remainingBytes / speed;
+
+            document.getElementById('uploadSpeed').textContent = speedMB + ' MB/s';
+
+            if (etaSeconds < 60) {
+                document.getElementById('uploadETA').textContent = Math.round(etaSeconds) + 's remaining';
+            } else {
+                document.getElementById('uploadETA').textContent = Math.round(etaSeconds / 60) + 'm remaining';
+            }
+        }
+    });
+
+    xhr.addEventListener('load', function() {
+        if (xhr.status === 200 || xhr.status === 302) {
+            // Success
+            showUploadSuccess();
+        } else {
+            // Check if it's a redirect (form submission success)
+            if (xhr.responseURL && xhr.responseURL.includes('my-videos')) {
+                showUploadSuccess();
+            } else {
+                showUploadError('Server returned an error. Please try again.');
+            }
+        }
+    });
+
+    xhr.addEventListener('error', function() {
+        showUploadError('Network error. Please check your connection.');
+    });
+
+    xhr.addEventListener('abort', function() {
+        showUploadError('Upload was cancelled.');
+    });
+
+    xhr.open('POST', uploadForm.action || window.location.href);
+    xhr.send(formData);
+});
+
+function showUploadSuccess() {
+    document.getElementById('uploadStatusTitle').style.display = 'none';
+    document.getElementById('uploadStatusText').style.display = 'none';
+    document.getElementById('uploadStats').style.display = 'none';
+    document.querySelector('.upload-icon-container').style.display = 'none';
+    document.querySelector('.progress').style.display = 'none';
+    document.getElementById('uploadSuccess').style.display = 'block';
+
+    // Redirect after 2 seconds
+    setTimeout(() => {
+        window.location.href = '{% url "videos:my_videos" %}';
+    }, 2000);
+}
+
+function showUploadError(message) {
+    document.getElementById('uploadStatusTitle').style.display = 'none';
+    document.getElementById('uploadStatusText').style.display = 'none';
+    document.getElementById('uploadStats').style.display = 'none';
+    document.querySelector('.upload-icon-container').style.display = 'none';
+    document.querySelector('.progress').style.display = 'none';
+    document.getElementById('uploadError').style.display = 'block';
+    document.getElementById('uploadErrorMsg').textContent = message;
+}
+
+function closeUploadModal() {
+    uploadModal.hide();
+    // Reset progress bar
+    document.getElementById('uploadProgressBar').style.width = '0%';
+    document.getElementById('uploadPercent').textContent = '0%';
+    document.getElementById('uploadedSize').textContent = '0 MB';
+}
 </script>
 {% endblock %}

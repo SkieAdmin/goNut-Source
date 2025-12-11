@@ -50,17 +50,22 @@
     }
 
     .form-control, .form-select {
-        background: var(--bg-secondary);
+        background: var(--bg-card);
         border: 1px solid rgba(147, 51, 234, 0.3);
         color: var(--text-primary);
         border-radius: 8px;
     }
 
     .form-control:focus, .form-select:focus {
-        background: var(--bg-secondary);
+        background: var(--bg-card);
         border-color: var(--purple-light);
         color: var(--text-primary);
         box-shadow: 0 0 0 0.2rem rgba(147, 51, 234, 0.25);
+    }
+
+    .form-select option {
+        background: var(--bg-card);
+        color: var(--text-primary);
     }
 
     .form-text {

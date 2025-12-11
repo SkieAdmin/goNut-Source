@@ -54,6 +54,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/apple-touch-icon.png' %}">
     <meta name="theme-color" content="#9333ea">
     <meta name="msapplication-TileColor" content="#9333ea">
+    <meta name="color-scheme" content="dark light">
 
     <!-- Preconnect for Performance -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
@@ -410,21 +411,36 @@
         </div>
     </div>
 
+    <style>
+        .age-blur {
+            filter: blur(15px);
+            pointer-events: none;
+            user-select: none;
+        }
+        .age-blur nav,
+        .age-blur main,
+        .age-blur footer {
+            filter: blur(15px);
+        }
+    </style>
     <script>
     // Age Verification Logic
     document.addEventListener('DOMContentLoaded', function() {
         const hasVerified = localStorage.getItem('age_verified');
 
         if (!hasVerified) {
+            // Blur the background content
+            document.querySelector('nav').classList.add('age-blur');
+            document.querySelector('main').classList.add('age-blur');
+            document.querySelector('footer').classList.add('age-blur');
+            document.body.style.overflow = 'hidden';
+
             // Show age verification modal
             const modal = new bootstrap.Modal(document.getElementById('ageVerificationModal'), {
                 backdrop: 'static',
                 keyboard: false
             });
             modal.show();
-
-            // Blur the background content
-            document.body.style.overflow = 'hidden';
         }
     });
 
@@ -432,6 +448,11 @@
         localStorage.setItem('age_verified', 'true');
         const modal = bootstrap.Modal.getInstance(document.getElementById('ageVerificationModal'));
         modal.hide();
+
+        // Remove blur
+        document.querySelector('nav').classList.remove('age-blur');
+        document.querySelector('main').classList.remove('age-blur');
+        document.querySelector('footer').classList.remove('age-blur');
         document.body.style.overflow = '';
     }
 
