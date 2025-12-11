@@ -344,6 +344,8 @@ class RedTubeAPI:
             data = response.json()
 
             videos = data.get('videos', [])
+            print(f"[RedTube API] Found {len(videos)} videos")
+
             # Normalize video structure
             normalized = []
             for v in videos:
@@ -365,10 +367,13 @@ class RedTubeAPI:
 
             return {
                 'videos': normalized,
-                'total_count': int(data.get('count', len(normalized))),
+                'count': int(data.get('count', len(normalized))),
             }
         except requests.RequestException as e:
-            print(f"RedTube API Error: {e}")
+            print(f"[RedTube API Error] {e}")
+            return None
+        except Exception as e:
+            print(f"[RedTube API Exception] {e}")
             return None
 
     @classmethod
