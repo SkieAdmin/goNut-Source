@@ -39,6 +39,15 @@ def login_view(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
+
+                # Handle "Remember Me" checkbox
+                if request.POST.get('remember_me'):
+                    # Keep session for 30 days
+                    request.session.set_expiry(60 * 60 * 24 * 30)
+                else:
+                    # Session expires when browser closes
+                    request.session.set_expiry(0)
+
                 next_url = request.GET.get('next', 'videos:home')
                 return redirect(next_url)
     else:

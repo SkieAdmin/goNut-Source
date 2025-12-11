@@ -35,6 +35,15 @@
                         </div>
                     </div>
 
+                    <!-- Remember Me -->
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="remember_me" id="rememberMe" class="form-check-input"
+                               style="background-color: var(--bg-secondary); border-color: rgba(147, 51, 234, 0.5);">
+                        <label class="form-check-label text-secondary" for="rememberMe">
+                            Remember me
+                        </label>
+                    </div>
+
                     {% if form.errors %}
                     <div class="alert alert-danger py-2 mb-3">
                         <small>Invalid username or password. Please try again.</small>

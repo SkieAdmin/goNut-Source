@@ -113,6 +113,16 @@ LOGIN_REDIRECT_URL = 'videos:home'
 LOGOUT_REDIRECT_URL = 'videos:home'
 
 # =============================================================================
+# Session Configuration (Remember Me)
+# =============================================================================
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Store sessions in database
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # Default: 30 days (in seconds)
+SESSION_COOKIE_SECURE = True  # Only send cookie over HTTPS in production
+SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to session cookie
+SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
+SESSION_SAVE_EVERY_REQUEST = True  # Refresh session expiry on every request
+
+# =============================================================================
 # SEO & Site Configuration
 # =============================================================================
 SITE_NAME = 'goNuts'
