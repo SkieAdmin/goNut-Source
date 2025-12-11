@@ -31,6 +31,28 @@ def home_view(request):
     # Get user's content preference
     gay_param = get_user_gay_param(request)
 
+    # Get LOCAL uploaded videos (Community Uploads) - PRIORITIZED
+    local_videos_qs = Video.objects.filter(is_active=True).order_by('-created_at')[:12]
+    local_videos = []
+    for v in local_videos_qs:
+        duration_str = ''
+        if v.duration:
+            mins, secs = divmod(v.duration, 60)
+            duration_str = f"{mins}:{secs:02d}"
+        local_videos.append({
+            'id': str(v.id),
+            'title': v.title,
+            'default_thumb': {'src': v.thumbnail.url if v.thumbnail else ''},
+            'views': v.views,
+            'rate': round((v.likes / (v.likes + v.dislikes) * 100) if (v.likes + v.dislikes) > 0 else 0, 1),
+            'length_min': duration_str,
+            'keywords': ', '.join(tag.name for tag in v.tags.all()),
+            'source': 'local',
+            'watch_url': f"/local/{v.slug}/",
+            'quality': v.quality,
+            'uploader': v.uploader.username if v.uploader else 'Anonymous',
+        })
+
     # Get videos from Eporner (filtered by user preference)
     eporner_trending = EpornerAPI.get_trending(per_page=8, gay=gay_param)
     eporner_latest = EpornerAPI.get_latest(per_page=8, gay=gay_param)
@@ -93,6 +115,7 @@ def home_view(request):
     popular_pornstars = PornstarService.get_popular(limit=20)
 
     context = {
+        'local_videos': local_videos,  # Community uploads - shown first
         'trending_videos': mixed_trending[:12],
         'newest_videos': mixed_newest[:12],
         'featured_videos': featured_videos,
@@ -214,7 +237,7 @@ def top_rated_view(request):
 
 
 def search_view(request):
-    """Search videos from both Eporner and RedTube APIs"""
+    """Search videos from local database, Eporner and RedTube APIs"""
     import random
     from urllib.parse import urlencode
 
@@ -223,9 +246,42 @@ def search_view(request):
     gay_param = get_user_gay_param(request)
 
     videos = []
+    local_videos = []
+    api_videos = []
     total_count = 0
 
     if query:
+        # Search LOCAL uploaded videos FIRST (prioritize)
+        local_results = Video.objects.filter(
+            Q(title__icontains=query) |
+            Q(description__icontains=query) |
+            Q(tags__name__icontains=query) |
+            Q(category__name__icontains=query),
+            is_active=True
+        ).distinct().order_by('-created_at')
+
+        local_total = local_results.count()
+
+        # Process local videos to match the format
+        for v in local_results:
+            duration_str = ''
+            if v.duration:
+                mins, secs = divmod(v.duration, 60)
+                duration_str = f"{mins}:{secs:02d}"
+
+            local_videos.append({
+                'id': str(v.id),
+                'title': v.title,
+                'default_thumb': {'src': v.thumbnail.url if v.thumbnail else ''},
+                'views': v.views,
+                'rate': round((v.likes / (v.likes + v.dislikes) * 100) if (v.likes + v.dislikes) > 0 else 0, 1),
+                'length_min': duration_str,
+                'keywords': ', '.join(tag.name for tag in v.tags.all()),
+                'source': 'local',
+                'watch_url': f"/local/{v.slug}/",
+                'quality': v.quality,
+            })
+
         # Search Eporner API
         eporner_data = EpornerAPI.search(query=query, page=page, per_page=12, gay=gay_param)
         eporner_videos = eporner_data.get('videos', []) if eporner_data else []
@@ -240,7 +296,7 @@ def search_view(request):
         for v in eporner_videos:
             v['source'] = 'eporner'
             v['watch_url'] = f"/watch/{v.get('id')}/"
-            videos.append(v)
+            api_videos.append(v)
 
         # Process RedTube videos to match Eporner format
         for v in redtube_videos:
@@ -251,7 +307,7 @@ def search_view(request):
                 'views': v.get('views', 0),
                 'rating': v.get('rating', 0),
             })
-            videos.append({
+            api_videos.append({
                 'id': v.get('id'),
                 'title': v.get('title', ''),
                 'default_thumb': {'src': v.get('thumb', '')},
@@ -263,9 +319,12 @@ def search_view(request):
                 'watch_url': f"/redtube/watch/{v.get('id')}/?{params}"
             })
 
-        # Shuffle to mix both sources
-        random.shuffle(videos)
-        total_count = eporner_total + redtube_total
+        # Shuffle API videos to mix sources
+        random.shuffle(api_videos)
+
+        # LOCAL VIDEOS FIRST, then API videos
+        videos = local_videos + api_videos
+        total_count = local_total + eporner_total + redtube_total
 
     context = {
         'videos': videos,

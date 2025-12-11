@@ -3,7 +3,12 @@
         <div class="video-thumbnail">
             <img src="{{ video.default_thumb.src }}" alt="{{ video.title }}" loading="lazy">
             <span class="video-duration">{{ video.length_min }}</span>
-            {% if video.source == 'redtube' %}
+            {% if video.source == 'local' %}
+            <span class="video-source" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);">LOCAL</span>
+            {% if video.quality %}
+            <span class="video-quality">{{ video.quality }}</span>
+            {% endif %}
+            {% elif video.source == 'redtube' %}
             <span class="video-source" style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);">RT</span>
             {% else %}
             <span class="video-source" style="background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);">EP</span>
