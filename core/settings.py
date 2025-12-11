@@ -12,6 +12,11 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://gonut.click',
+    'https://www.gonut.click',
+]
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -20,9 +25,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'django.contrib.sites',
+    'django.contrib.sitemaps',
     'videos',
     'accounts',
 ]
+
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -47,6 +56,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'videos.context_processors.categories_processor',
+                'core.context_processors.seo_processor',
             ],
         },
     },
@@ -101,3 +111,33 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'videos:home'
 LOGOUT_REDIRECT_URL = 'videos:home'
+
+# =============================================================================
+# SEO & Site Configuration
+# =============================================================================
+SITE_NAME = 'goNuts'
+SITE_DOMAIN = 'gonut.click'
+SITE_URL = 'https://gonut.click'
+SITE_TAGLINE = 'Your Ultimate Adult Entertainment Universe'
+SITE_DESCRIPTION = (
+    'goNuts - Stream premium adult content, explore diverse categories, '
+    'and discover exclusive HD videos. The ultimate platform for adult entertainment '
+    'with thousands of free videos updated daily.'
+)
+SITE_KEYWORDS = [
+    'adult videos', 'premium adult content', 'HD porn', 'free adult videos',
+    'streaming adult', 'adult entertainment', 'xxx videos', 'hentai',
+    'adult categories', 'trending adult videos', 'goNuts'
+]
+
+# Social Media Links (update with actual links)
+SOCIAL_LINKS = {
+    'twitter': 'https://twitter.com/gonutsofficial',
+    'instagram': 'https://instagram.com/gonutsofficial',
+    'telegram': 'https://t.me/gonutsofficial',
+    'discord': 'https://discord.gg/gonuts',
+}
+
+# SEO settings
+SEO_DEFAULT_IMAGE = '/static/images/og-default.jpg'  # Default Open Graph image
+SEO_TWITTER_HANDLE = '@gonutsofficial'
