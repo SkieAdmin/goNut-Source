@@ -61,4 +61,10 @@ urlpatterns = [
     path('api/list/update/', views.update_list_entry, name='update_list_entry'),
     path('api/list/remove/', views.remove_from_list, name='remove_from_list'),
     path('api/list/status/<str:video_id>/', views.get_list_status, name='get_list_status'),
+
+    # User Video Upload
+    path('upload/', views.upload_video_view, name='upload'),
+    path('my-videos/', views.my_videos_view, name='my_videos'),
+    path('edit/<slug:slug>/', views.edit_video_view, name='edit_video'),
+    path('delete/<slug:slug>/', views.delete_video_view, name='delete_video'),
 ]

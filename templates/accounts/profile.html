@@ -209,6 +209,8 @@
                 <i class="bi bi-calendar me-1"></i>Joined {{ user.date_joined|date:"F Y" }}
             </p>
             <div class="quick-links">
+                <a href="{% url 'videos:upload' %}" class="quick-link"><i class="bi bi-cloud-upload me-1"></i>Upload</a>
+                <a href="{% url 'videos:my_videos' %}" class="quick-link"><i class="bi bi-camera-video me-1"></i>My Videos</a>
                 <a href="{% url 'videos:my_list' %}" class="quick-link"><i class="bi bi-list-ul me-1"></i>My List</a>
                 <a href="{% url 'accounts:public_profile' user.username %}" class="quick-link"><i class="bi bi-globe me-1"></i>Public Profile</a>
                 <a href="{% url 'accounts:edit_profile' %}" class="quick-link"><i class="bi bi-pencil me-1"></i>Edit</a>

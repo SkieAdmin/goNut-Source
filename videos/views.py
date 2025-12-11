@@ -1,8 +1,9 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, DetailView, View
 from django.db.models import Q, F
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.core.paginator import Paginator
 from django.views.decorators.http import require_POST
 import json
@@ -10,6 +11,7 @@ from .models import (
     Video, Category, Tag, Comment, VideoLike, Favorite, VideoView,
     APIVideoView, APIVideoLike, APIVideoFavorite, APIVideoComment, VideoList
 )
+from .forms import VideoUploadForm, VideoEditForm
 from .services import EpornerAPI, HanimeAPI, RedTubeAPI, PornstarService, parse_duration, get_embed_url, get_quality_label
 
 
@@ -530,6 +532,32 @@ def redtube_watch_view(request, video_id):
             'url': f'https://www.redtube.com/{video_id}',
         }
 
+    # Log view for authenticated users (history tracking)
+    if request.user.is_authenticated:
+        APIVideoView.objects.create(
+            user=request.user,
+            video_id=video_id,
+            source='redtube',
+            title=video_data.get('title', ''),
+            thumbnail=video_data.get('thumb', ''),
+            duration=video_data.get('duration', '')
+        )
+
+    # Get user interaction data
+    user_like = None
+    is_favorited = False
+    if request.user.is_authenticated:
+        like_obj = APIVideoLike.objects.filter(user=request.user, video_id=video_id, source='redtube').first()
+        user_like = like_obj.is_like if like_obj else None
+        is_favorited = APIVideoFavorite.objects.filter(user=request.user, video_id=video_id, source='redtube').exists()
+
+    # Get comments for this video
+    comments = APIVideoComment.objects.filter(video_id=video_id, source='redtube', is_active=True).select_related('user')[:50]
+
+    # Count likes/dislikes from our database
+    likes_count = APIVideoLike.objects.filter(video_id=video_id, source='redtube', is_like=True).count()
+    dislikes_count = APIVideoLike.objects.filter(video_id=video_id, source='redtube', is_like=False).count()
+
     # Get related videos
     related_data = RedTubeAPI.get_latest(page=1)
 
@@ -537,6 +565,11 @@ def redtube_watch_view(request, video_id):
         'video': video_data,
         'embed_url': embed_url,
         'related_videos': related_data.get('videos', [])[:12] if related_data else [],
+        'user_like': user_like,
+        'is_favorited': is_favorited,
+        'comments': comments,
+        'likes_count': likes_count,
+        'dislikes_count': dislikes_count,
     }
     return render(request, 'videos/redtube/watch.html', context)
 
@@ -1114,3 +1147,106 @@ def get_list_status(request, video_id):
         })
 
     return JsonResponse({'in_list': False})
+
+
+# ============ USER VIDEO UPLOAD VIEWS ============
+
+@login_required
+def upload_video_view(request):
+    """Upload a new video"""
+    if request.method == 'POST':
+        form = VideoUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            video = form.save(commit=False)
+            video.uploader = request.user
+            video.save()
+            form.save_m2m()  # Save tags
+
+            # Re-save to trigger slug generation with actual ID
+            video.save()
+
+            messages.success(request, 'Video uploaded successfully!')
+            return redirect('videos:my_videos')
+    else:
+        form = VideoUploadForm()
+
+    context = {
+        'form': form,
+        'categories': Category.objects.all(),
+    }
+    return render(request, 'videos/upload.html', context)
+
+
+@login_required
+def my_videos_view(request):
+    """List user's uploaded videos"""
+    videos = Video.objects.filter(uploader=request.user).order_by('-created_at')
+
+    # Pagination
+    page = int(request.GET.get('page', 1))
+    paginator = Paginator(videos, 12)
+    page_obj = paginator.get_page(page)
+
+    # Calculate stats
+    total_views = sum(v.views for v in videos)
+    total_likes = sum(v.likes for v in videos)
+
+    context = {
+        'videos': page_obj,
+        'total_count': paginator.count,
+        'total_views': total_views,
+        'total_likes': total_likes,
+        'current_page': page,
+        'has_next': page_obj.has_next(),
+        'has_prev': page_obj.has_previous(),
+    }
+    return render(request, 'videos/my_videos.html', context)
+
+
+@login_required
+def edit_video_view(request, slug):
+    """Edit an existing video"""
+    video = get_object_or_404(Video, slug=slug)
+
+    # Check ownership
+    if video.uploader != request.user and not request.user.is_staff:
+        raise Http404("You don't have permission to edit this video.")
+
+    if request.method == 'POST':
+        form = VideoEditForm(request.POST, request.FILES, instance=video)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Video updated successfully!')
+            return redirect('videos:my_videos')
+    else:
+        form = VideoEditForm(instance=video)
+
+    context = {
+        'form': form,
+        'video': video,
+        'categories': Category.objects.all(),
+    }
+    return render(request, 'videos/edit_video.html', context)
+
+
+@login_required
+@require_POST
+def delete_video_view(request, slug):
+    """Delete a video"""
+    video = get_object_or_404(Video, slug=slug)
+
+    # Check ownership
+    if video.uploader != request.user and not request.user.is_staff:
+        raise Http404("You don't have permission to delete this video.")
+
+    # Delete the video file and thumbnail
+    if video.video_file:
+        video.video_file.delete(save=False)
+    if video.thumbnail:
+        video.thumbnail.delete(save=False)
+    if video.preview_gif:
+        video.preview_gif.delete(save=False)
+
+    video.delete()
+    messages.success(request, 'Video deleted successfully!')
+    return redirect('videos:my_videos')

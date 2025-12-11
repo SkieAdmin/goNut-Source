@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Video - {{ video.title }} - goNuts{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .edit-card {
+        background: var(--bg-card);
+        border-radius: 16px;
+        padding: 2rem;
+    }
+
+    .edit-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid rgba(147, 51, 234, 0.2);
+    }
+
+    .edit-header i {
+        font-size: 2rem;
+        color: var(--purple-light);
+    }
+
+    .current-video-preview {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .current-thumbnail {
+        width: 200px;
+        aspect-ratio: 16/9;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+
+    .form-label {
+        color: var(--text-secondary);
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control, .form-select {
+        background: var(--bg-secondary);
+        border: 1px solid rgba(147, 51, 234, 0.3);
+        color: var(--text-primary);
+        border-radius: 8px;
+    }
+
+    .form-control:focus, .form-select:focus {
+        background: var(--bg-secondary);
+        border-color: var(--purple-light);
+        color: var(--text-primary);
+        box-shadow: 0 0 0 0.2rem rgba(147, 51, 234, 0.25);
+    }
+
+    .form-text {
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+    }
+
+    .form-check-input:checked {
+        background-color: var(--purple-primary);
+        border-color: var(--purple-primary);
+    }
+
+    .thumbnail-preview {
+        max-width: 200px;
+        border-radius: 8px;
+        margin-top: 0.5rem;
+        display: none;
+    }
+
+    .error-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .error-list li {
+        color: #ef4444;
+        font-size: 0.85rem;
+    }
+
+    .video-stats {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .video-stats span {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .video-stats i {
+        color: var(--purple-light);
+        margin-right: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-container">
+    <div class="edit-card">
+        <div class="edit-header">
+            <a href="{% url 'videos:my_videos' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h2 class="mb-0">Edit Video</h2>
+                <p class="text-secondary mb-0">Update your video details</p>
+            </div>
+        </div>
+
+        <!-- Current Video Info -->
+        <div class="current-video-preview">
+            <div class="d-flex gap-3 flex-wrap">
+                {% if video.thumbnail %}
+                <img src="{{ video.thumbnail.url }}" alt="{{ video.title }}" class="current-thumbnail">
+                {% endif %}
+                <div class="flex-grow-1">
+                    <h5 class="mb-2">{{ video.title }}</h5>
+                    <div class="video-stats">
+                        <span><i class="bi bi-eye"></i> {{ video.views }} views</span>
+                        <span><i class="bi bi-hand-thumbs-up"></i> {{ video.likes }} likes</span>
+                        <span><i class="bi bi-clock"></i> {{ video.duration_formatted }}</span>
+                        <span><i class="bi bi-calendar"></i> {{ video.created_at|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="mt-2">
+                        <a href="{% url 'videos:local_watch' video.slug %}" class="btn btn-outline-purple btn-sm" target="_blank">
+                            <i class="bi bi-play me-1"></i>View Video
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- Title -->
+            <div class="mb-4">
+                <label class="form-label" for="id_title">Title <span class="text-danger">*</span></label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                <ul class="error-list mt-1">
+                    {% for error in form.title.errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+
+            <!-- Description -->
+            <div class="mb-4">
+                <label class="form-label" for="id_description">Description</label>
+                {{ form.description }}
+                <small class="form-text">Optional. Describe your video content.</small>
+            </div>
+
+            <!-- Thumbnail -->
+            <div class="mb-4">
+                <label class="form-label">Thumbnail</label>
+                {% if video.thumbnail %}
+                <div class="mb-2">
+                    <small class="text-secondary">Current thumbnail:</small>
+                    <img src="{{ video.thumbnail.url }}" alt="Current thumbnail" class="d-block mt-1" style="max-width: 150px; border-radius: 8px;">
+                </div>
+                {% endif %}
+                {{ form.thumbnail }}
+                <small class="form-text">Leave empty to keep current thumbnail. Recommended: 16:9 ratio, 1280x720px</small>
+                <img id="newThumbPreview" class="thumbnail-preview" src="" alt="New thumbnail preview">
+                {% if form.thumbnail.errors %}
+                <ul class="error-list mt-1">
+                    {% for error in form.thumbnail.errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+
+            <div class="row">
+                <!-- Category -->
+                <div class="col-md-6 mb-4">
+                    <label class="form-label" for="id_category">Category</label>
+                    {{ form.category }}
+                    {% if form.category.errors %}
+                    <ul class="error-list mt-1">
+                        {% for error in form.category.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+
+                <!-- Quality -->
+                <div class="col-md-6 mb-4">
+                    <label class="form-label" for="id_quality">Video Quality</label>
+                    {{ form.quality }}
+                </div>
+            </div>
+
+            <!-- Tags -->
+            <div class="mb-4">
+                <label class="form-label" for="id_tags_input">Tags</label>
+                {{ form.tags_input }}
+                <small class="form-text">Separate tags with commas (e.g., amateur, blonde, hd)</small>
+            </div>
+
+            <!-- Visibility -->
+            <div class="mb-4 p-3 rounded" style="background: rgba(147, 51, 234, 0.1); border: 1px solid rgba(147, 51, 234, 0.3);">
+                <div class="form-check">
+                    {{ form.is_active }}
+                    <label class="form-check-label" for="id_is_active">
+                        <strong>Video is Active</strong>
+                    </label>
+                </div>
+                <small class="text-secondary d-block mt-1">Uncheck to hide this video from public view</small>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="d-flex gap-3 mt-4">
+                <button type="submit" class="btn btn-purple btn-lg">
+                    <i class="bi bi-check-lg me-2"></i>Save Changes
+                </button>
+                <a href="{% url 'videos:my_videos' %}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Preview new thumbnail
+document.getElementById('id_thumbnail').addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('newThumbPreview');
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(this.files[0]);
+    }
+});
+</script>
+{% endblock %}

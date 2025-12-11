@@ -176,6 +176,94 @@
     .list-remove-btn:hover {
         color: #dc2626;
     }
+
+    /* Action buttons */
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        border: 1px solid rgba(220, 38, 38, 0.3);
+        background: var(--bg-card);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .action-btn:hover {
+        background: rgba(220, 38, 38, 0.1);
+        border-color: #dc2626;
+        color: #dc2626;
+    }
+
+    .action-btn.active {
+        background: #dc2626;
+        border-color: #dc2626;
+        color: white;
+    }
+
+    .action-btn.liked {
+        background: #22c55e;
+        border-color: #22c55e;
+        color: white;
+    }
+
+    .action-btn.disliked {
+        background: #ef4444;
+        border-color: #ef4444;
+        color: white;
+    }
+
+    .action-btn.favorited {
+        background: #ec4899;
+        border-color: #ec4899;
+        color: white;
+    }
+
+    /* Comments section */
+    .comments-section {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .comment-form textarea {
+        background: var(--bg-secondary);
+        border: 1px solid rgba(220, 38, 38, 0.3);
+        color: var(--text-primary);
+        border-radius: 8px;
+        resize: none;
+    }
+
+    .comment-form textarea:focus {
+        background: var(--bg-secondary);
+        border-color: #dc2626;
+        color: var(--text-primary);
+        box-shadow: 0 0 0 0.2rem rgba(220, 38, 38, 0.25);
+    }
+
+    .comment-item {
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .comment-item:last-child {
+        border-bottom: none;
+    }
+
+    .comment-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+    }
 </style>
 {% endblock %}
 
@@ -214,9 +302,38 @@
                 {% endif %}
             </div>
 
+            <!-- Action Buttons -->
             <div class="d-flex gap-2 flex-wrap">
-                <button class="btn btn-outline-danger btn-sm" onclick="navigator.share({title: '{{ video.title }}', url: window.location.href})">
-                    <i class="bi bi-share me-1"></i>Share
+                {% if user.is_authenticated %}
+                <button class="action-btn {% if user_like == True %}liked{% endif %}" id="likeBtn" onclick="likeVideo()">
+                    <i class="bi bi-hand-thumbs-up{% if user_like == True %}-fill{% endif %}"></i>
+                    <span id="likesCount">{{ likes_count }}</span>
+                </button>
+                <button class="action-btn {% if user_like == False %}disliked{% endif %}" id="dislikeBtn" onclick="dislikeVideo()">
+                    <i class="bi bi-hand-thumbs-down{% if user_like == False %}-fill{% endif %}"></i>
+                    <span id="dislikesCount">{{ dislikes_count }}</span>
+                </button>
+                <button class="action-btn {% if is_favorited %}favorited{% endif %}" id="favoriteBtn" onclick="toggleFavorite()">
+                    <i class="bi bi-heart{% if is_favorited %}-fill{% endif %}"></i>
+                    <span>{% if is_favorited %}Saved{% else %}Save{% endif %}</span>
+                </button>
+                {% else %}
+                <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="action-btn">
+                    <i class="bi bi-hand-thumbs-up"></i>
+                    <span>{{ likes_count }}</span>
+                </a>
+                <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="action-btn">
+                    <i class="bi bi-hand-thumbs-down"></i>
+                    <span>{{ dislikes_count }}</span>
+                </a>
+                <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="action-btn">
+                    <i class="bi bi-heart"></i>
+                    <span>Save</span>
+                </a>
+                {% endif %}
+                <button class="action-btn" onclick="navigator.share({title: '{{ video.title }}', url: window.location.href})">
+                    <i class="bi bi-share"></i>
+                    <span>Share</span>
                 </button>
             </div>
         </div>
@@ -297,6 +414,52 @@
             </div>
             {% endif %}
         </div>
+
+        <!-- Comments Section -->
+        <div class="comments-section">
+            <h5 class="mb-4"><i class="bi bi-chat-dots me-2" style="color: #dc2626;"></i>Comments ({{ comments|length }})</h5>
+
+            {% if user.is_authenticated %}
+            <div class="comment-form mb-4">
+                <div class="d-flex gap-3">
+                    <div class="comment-avatar flex-shrink-0">
+                        {{ user.username|first|upper }}
+                    </div>
+                    <div class="flex-grow-1">
+                        <textarea class="form-control mb-2" id="commentInput" rows="2" placeholder="Add a comment..."></textarea>
+                        <button class="btn btn-danger btn-sm" onclick="addComment()">
+                            <i class="bi bi-send me-1"></i>Post Comment
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-secondary mb-4">
+                <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="text-danger">Login</a> to leave a comment
+            </div>
+            {% endif %}
+
+            <div id="commentsContainer">
+                {% for comment in comments %}
+                <div class="comment-item">
+                    <div class="d-flex gap-3">
+                        <div class="comment-avatar flex-shrink-0">
+                            {{ comment.user.username|first|upper }}
+                        </div>
+                        <div>
+                            <div class="mb-1">
+                                <strong class="text-white">{{ comment.user.username }}</strong>
+                                <small class="text-secondary ms-2">{{ comment.created_at|date:"M d, Y" }}</small>
+                            </div>
+                            <p class="mb-0 text-secondary">{{ comment.content }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-secondary text-center" id="noCommentsMsg">No comments yet. Be the first to comment!</p>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 
     <!-- Sidebar - Related Videos -->
@@ -331,6 +494,166 @@ const videoTitle = '{{ video.title|escapejs }}';
 const videoThumb = '{{ video.thumb|escapejs }}';
 const videoDuration = '{{ video.duration|escapejs }}';
 const csrfToken = '{{ csrf_token }}';
+
+// Like/Dislike/Favorite Functions
+async function likeVideo() {
+    try {
+        const response = await fetch(`/api/video/${videoId}/like/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ source: 'redtube' })
+        });
+        const data = await response.json();
+
+        // Update UI
+        document.getElementById('likesCount').textContent = data.likes;
+        document.getElementById('dislikesCount').textContent = data.dislikes;
+
+        const likeBtn = document.getElementById('likeBtn');
+        const dislikeBtn = document.getElementById('dislikeBtn');
+
+        if (data.status === 'liked') {
+            likeBtn.classList.add('liked');
+            likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up-fill';
+            dislikeBtn.classList.remove('disliked');
+            dislikeBtn.querySelector('i').className = 'bi bi-hand-thumbs-down';
+        } else {
+            likeBtn.classList.remove('liked');
+            likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up';
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function dislikeVideo() {
+    try {
+        const response = await fetch(`/api/video/${videoId}/dislike/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ source: 'redtube' })
+        });
+        const data = await response.json();
+
+        // Update UI
+        document.getElementById('likesCount').textContent = data.likes;
+        document.getElementById('dislikesCount').textContent = data.dislikes;
+
+        const likeBtn = document.getElementById('likeBtn');
+        const dislikeBtn = document.getElementById('dislikeBtn');
+
+        if (data.status === 'disliked') {
+            dislikeBtn.classList.add('disliked');
+            dislikeBtn.querySelector('i').className = 'bi bi-hand-thumbs-down-fill';
+            likeBtn.classList.remove('liked');
+            likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up';
+        } else {
+            dislikeBtn.classList.remove('disliked');
+            dislikeBtn.querySelector('i').className = 'bi bi-hand-thumbs-down';
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function toggleFavorite() {
+    try {
+        const response = await fetch(`/api/video/${videoId}/favorite/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                source: 'redtube',
+                title: videoTitle,
+                thumbnail: videoThumb,
+                duration: videoDuration
+            })
+        });
+        const data = await response.json();
+
+        const favoriteBtn = document.getElementById('favoriteBtn');
+        if (data.status === 'added') {
+            favoriteBtn.classList.add('favorited');
+            favoriteBtn.querySelector('i').className = 'bi bi-heart-fill';
+            favoriteBtn.querySelector('span').textContent = 'Saved';
+            showToast('Added to favorites!', 'success');
+        } else {
+            favoriteBtn.classList.remove('favorited');
+            favoriteBtn.querySelector('i').className = 'bi bi-heart';
+            favoriteBtn.querySelector('span').textContent = 'Save';
+            showToast('Removed from favorites', 'success');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function addComment() {
+    const content = document.getElementById('commentInput').value.trim();
+    if (!content) return;
+
+    try {
+        const response = await fetch(`/api/video/${videoId}/comment/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                source: 'redtube',
+                content: content
+            })
+        });
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            // Remove "no comments" message if present
+            const noCommentsMsg = document.getElementById('noCommentsMsg');
+            if (noCommentsMsg) noCommentsMsg.remove();
+
+            // Add new comment to the top
+            const container = document.getElementById('commentsContainer');
+            const commentHtml = `
+                <div class="comment-item">
+                    <div class="d-flex gap-3">
+                        <div class="comment-avatar flex-shrink-0">
+                            ${data.comment.username[0].toUpperCase()}
+                        </div>
+                        <div>
+                            <div class="mb-1">
+                                <strong class="text-white">${data.comment.username}</strong>
+                                <small class="text-secondary ms-2">${data.comment.created_at}</small>
+                            </div>
+                            <p class="mb-0 text-secondary">${data.comment.content}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('afterbegin', commentHtml);
+
+            // Clear input
+            document.getElementById('commentInput').value = '';
+
+            // Update comment count
+            const countEl = document.querySelector('.comments-section h5');
+            const currentCount = parseInt(countEl.textContent.match(/\d+/)?.[0] || 0);
+            countEl.innerHTML = `<i class="bi bi-chat-dots me-2" style="color: #dc2626;"></i>Comments (${currentCount + 1})`;
+
+            showToast('Comment posted!', 'success');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to post comment', 'danger');
+    }
+}
 
 // MAL-style List Management Functions
 let currentListStatus = '';

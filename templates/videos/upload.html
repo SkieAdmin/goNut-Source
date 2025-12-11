@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Video - goNuts{% endblock %}
+
+{% block extra_css %}
+<style>
+    .upload-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .upload-card {
+        background: var(--bg-card);
+        border-radius: 16px;
+        padding: 2rem;
+    }
+
+    .upload-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid rgba(147, 51, 234, 0.2);
+    }
+
+    .upload-header i {
+        font-size: 2.5rem;
+        color: var(--purple-light);
+    }
+
+    .form-label {
+        color: var(--text-secondary);
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control, .form-select {
+        background: var(--bg-secondary);
+        border: 1px solid rgba(147, 51, 234, 0.3);
+        color: var(--text-primary);
+        border-radius: 8px;
+    }
+
+    .form-control:focus, .form-select:focus {
+        background: var(--bg-secondary);
+        border-color: var(--purple-light);
+        color: var(--text-primary);
+        box-shadow: 0 0 0 0.2rem rgba(147, 51, 234, 0.25);
+    }
+
+    .form-text {
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+    }
+
+    .file-upload-zone {
+        border: 2px dashed rgba(147, 51, 234, 0.4);
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        background: rgba(147, 51, 234, 0.05);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .file-upload-zone:hover {
+        border-color: var(--purple-light);
+        background: rgba(147, 51, 234, 0.1);
+    }
+
+    .file-upload-zone.dragover {
+        border-color: var(--purple-light);
+        background: rgba(147, 51, 234, 0.15);
+    }
+
+    .file-upload-zone i {
+        font-size: 3rem;
+        color: var(--purple-light);
+        margin-bottom: 1rem;
+    }
+
+    .file-preview {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 8px;
+        display: none;
+    }
+
+    .file-preview.show {
+        display: block;
+    }
+
+    .thumbnail-preview {
+        max-width: 200px;
+        border-radius: 8px;
+        margin-top: 0.5rem;
+    }
+
+    .error-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .error-list li {
+        color: #ef4444;
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="upload-container">
+    <div class="upload-card">
+        <div class="upload-header">
+            <i class="bi bi-cloud-upload"></i>
+            <div>
+                <h2 class="mb-0">Upload Video</h2>
+                <p class="text-secondary mb-0">Share your content with the community</p>
+            </div>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" id="uploadForm">
+            {% csrf_token %}
+
+            <!-- Video File Upload -->
+            <div class="mb-4">
+                <label class="form-label">Video File <span class="text-danger">*</span></label>
+                <div class="file-upload-zone" id="videoDropZone" onclick="document.getElementById('id_video_file').click()">
+                    <i class="bi bi-film"></i>
+                    <p class="mb-1">Drag and drop your video here or click to browse</p>
+                    <small class="text-secondary">Supported: MP4, WebM, MOV, AVI, MKV (Max 500MB)</small>
+                    {{ form.video_file }}
+                </div>
+                <div class="file-preview" id="videoPreview">
+                    <i class="bi bi-check-circle text-success me-2"></i>
+                    <span id="videoFileName"></span>
+                    <span id="videoFileSize" class="text-secondary ms-2"></span>
+                </div>
+                {% if form.video_file.errors %}
+                <ul class="error-list mt-2">
+                    {% for error in form.video_file.errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+
+            <!-- Thumbnail Upload -->
+            <div class="mb-4">
+                <label class="form-label">Thumbnail <span class="text-danger">*</span></label>
+                <div class="file-upload-zone" id="thumbDropZone" onclick="document.getElementById('id_thumbnail').click()">
+                    <i class="bi bi-image"></i>
+                    <p class="mb-1">Upload a thumbnail image</p>
+                    <small class="text-secondary">Recommended: 16:9 ratio, 1280x720px (JPG, PNG, GIF, WebP)</small>
+                    {{ form.thumbnail }}
+                </div>
+                <div class="file-preview" id="thumbPreview">
+                    <img id="thumbPreviewImg" class="thumbnail-preview" src="" alt="Thumbnail preview">
+                </div>
+                {% if form.thumbnail.errors %}
+                <ul class="error-list mt-2">
+                    {% for error in form.thumbnail.errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+
+            <!-- Title -->
+            <div class="mb-4">
+                <label class="form-label" for="id_title">Title <span class="text-danger">*</span></label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                <ul class="error-list mt-1">
+                    {% for error in form.title.errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+
+            <!-- Description -->
+            <div class="mb-4">
+                <label class="form-label" for="id_description">Description</label>
+                {{ form.description }}
+                <small class="form-text">Optional. Describe your video content.</small>
+            </div>
+
+            <div class="row">
+                <!-- Category -->
+                <div class="col-md-6 mb-4">
+                    <label class="form-label" for="id_category">Category <span class="text-danger">*</span></label>
+                    {{ form.category }}
+                    {% if form.category.errors %}
+                    <ul class="error-list mt-1">
+                        {% for error in form.category.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+
+                <!-- Quality -->
+                <div class="col-md-6 mb-4">
+                    <label class="form-label" for="id_quality">Video Quality</label>
+                    {{ form.quality }}
+                </div>
+            </div>
+
+            <!-- Tags -->
+            <div class="mb-4">
+                <label class="form-label" for="id_tags_input">Tags</label>
+                {{ form.tags_input }}
+                <small class="form-text">Separate tags with commas (e.g., amateur, blonde, hd)</small>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="d-flex gap-3 mt-4">
+                <button type="submit" class="btn btn-purple btn-lg">
+                    <i class="bi bi-cloud-upload me-2"></i>Upload Video
+                </button>
+                <a href="{% url 'videos:my_videos' %}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Hide native file inputs
+document.querySelectorAll('.file-upload-zone input[type="file"]').forEach(input => {
+    input.style.display = 'none';
+});
+
+// Video file handling
+const videoInput = document.getElementById('id_video_file');
+const videoDropZone = document.getElementById('videoDropZone');
+const videoPreview = document.getElementById('videoPreview');
+const videoFileName = document.getElementById('videoFileName');
+const videoFileSize = document.getElementById('videoFileSize');
+
+videoInput.addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+        const file = this.files[0];
+        videoFileName.textContent = file.name;
+        videoFileSize.textContent = `(${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+        videoPreview.classList.add('show');
+    }
+});
+
+// Thumbnail file handling
+const thumbInput = document.getElementById('id_thumbnail');
+const thumbDropZone = document.getElementById('thumbDropZone');
+const thumbPreview = document.getElementById('thumbPreview');
+const thumbPreviewImg = document.getElementById('thumbPreviewImg');
+
+thumbInput.addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+        const file = this.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            thumbPreviewImg.src = e.target.result;
+            thumbPreview.classList.add('show');
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Drag and drop functionality
+['videoDropZone', 'thumbDropZone'].forEach(id => {
+    const zone = document.getElementById(id);
+    const input = zone.querySelector('input[type="file"]');
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        zone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        zone.addEventListener(eventName, () => zone.classList.add('dragover'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        zone.addEventListener(eventName, () => zone.classList.remove('dragover'), false);
+    });
+
+    zone.addEventListener('drop', function(e) {
+        const files = e.dataTransfer.files;
+        if (files.length) {
+            input.files = files;
+            input.dispatchEvent(new Event('change'));
+        }
+    });
+});
+</script>
+{% endblock %}
