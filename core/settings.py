@@ -117,10 +117,17 @@ LOGOUT_REDIRECT_URL = 'videos:home'
 # =============================================================================
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Store sessions in database
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # Default: 30 days (in seconds)
-SESSION_COOKIE_SECURE = True  # Only send cookie over HTTPS in production
+SESSION_COOKIE_SECURE = not DEBUG  # Only send cookie over HTTPS in production
 SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to session cookie
 SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
+SESSION_COOKIE_DOMAIN = '.gonut.click' if not DEBUG else None  # Share session across subdomains
 SESSION_SAVE_EVERY_REQUEST = True  # Refresh session expiry on every request
+
+# CSRF Cookie settings (must match session for consistency)
+CSRF_COOKIE_SECURE = not DEBUG  # Only send CSRF cookie over HTTPS in production
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_DOMAIN = '.gonut.click' if not DEBUG else None  # Share CSRF across subdomains
 
 # =============================================================================
 # SEO & Site Configuration
