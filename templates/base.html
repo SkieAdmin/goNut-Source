@@ -5,38 +5,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}goNuts{% endblock %}</title>
+    <title>{% block title %}{{ site_name }} - {{ site_tagline }}{% endblock %}</title>
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{% block canonical_url %}{{ canonical_url }}{% endblock %}">
 
     <!-- SEO Meta Tags -->
-    <meta name="description"
-        content="{% block meta_description %}goNuts - Your ultimate adult universe. Stream premium adult content, explore diverse categories, and discover exclusive videos. A next-level platform for adult entertainment.{% endblock %}">
-    <meta name="keywords"
-        content="adult videos, porn, xxx, premium adult content, hentai, adult entertainment, free porn videos, HD adult videos">
-    <meta name="author" content="goNuts">
+    <meta name="description" content="{% block meta_description %}{{ site_description }}{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}{{ site_keywords }}{% endblock %}">
+    <meta name="author" content="{{ site_name }}">
+    <meta name="robots" content="{% block robots %}index, follow{% endblock %}">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+
+    <!-- Adult Content Rating -->
     <meta name="rating" content="adult">
     <meta name="RATING" content="RTA-5042-1996-1400-1577-RTA">
     <link rel="rating" href="http://www.rtalabel.org/">
 
+    <!-- Geo & Language -->
+    <meta name="language" content="English">
+    <meta name="revisit-after" content="1 days">
+    <meta name="distribution" content="global">
+
     <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
-    <meta property="og:title"
-        content="{% block og_title %}goNuts - Premium Adult Entertainment Universe{% endblock %}">
-    <meta property="og:description"
-        content="{% block og_description %}Explore limitless adult content on goNuts. High-quality videos, diverse categories, and exclusive premium content for discerning viewers.{% endblock %}">
-    <meta property="og:site_name" content="goNuts">
+    <meta property="og:title" content="{% block og_title %}{{ site_name }} - {{ site_tagline }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ site_description }}{% endblock %}">
+    <meta property="og:site_name" content="{{ site_name }}">
+    <meta property="og:image" content="{% block og_image %}{{ site_url }}{{ seo_default_image }}{% endblock %}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="en_US">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="{{ seo_twitter_handle }}">
+    <meta name="twitter:creator" content="{{ seo_twitter_handle }}">
     <meta name="twitter:url" content="{{ request.build_absolute_uri }}">
-    <meta name="twitter:title" content="{% block twitter_title %}goNuts - Premium Adult Universe{% endblock %}">
-    <meta name="twitter:description"
-        content="{% block twitter_description %}Your ultimate destination for premium adult entertainment. Stream, explore, and discover high-quality content.{% endblock %}">
+    <meta name="twitter:title" content="{% block twitter_title %}{{ site_name }} - {{ site_tagline }}{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}{{ site_description }}{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ site_url }}{{ seo_default_image }}{% endblock %}">
+
+    <!-- Favicon & App Icons -->
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/apple-touch-icon.png' %}">
+    <meta name="theme-color" content="#9333ea">
+    <meta name="msapplication-TileColor" content="#9333ea">
+
+    <!-- Preconnect for Performance -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
     {% block extra_css %}{% endblock %}
+
+    {% block extra_head %}{% endblock %}
 </head>
 
 <body>
@@ -184,16 +212,16 @@
                 <div class="col-md-4 mb-3">
                     <h6 class="text-white mb-3">Stay Connected</h6>
                     <div class="d-flex gap-3">
-                        <a href="#" class="fs-5"><i class="bi bi-twitter"></i></a>
-                        <a href="#" class="fs-5"><i class="bi bi-instagram"></i></a>
-                        <a href="#" class="fs-5"><i class="bi bi-telegram"></i></a>
-                        <a href="#" class="fs-5"><i class="bi bi-discord"></i></a>
+                        <a href="{{ social_links.twitter }}" class="fs-5" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><i class="bi bi-twitter-x"></i></a>
+                        <a href="{{ social_links.instagram }}" class="fs-5" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+                        <a href="{{ social_links.telegram }}" class="fs-5" target="_blank" rel="noopener noreferrer" aria-label="Telegram"><i class="bi bi-telegram"></i></a>
+                        <a href="{{ social_links.discord }}" class="fs-5" target="_blank" rel="noopener noreferrer" aria-label="Discord"><i class="bi bi-discord"></i></a>
                     </div>
                 </div>
             </div>
             <hr style="border-color: rgba(147, 51, 234, 0.2);">
             <div class="text-center text-secondary small">
-                &copy; 2024 goNuts. All rights reserved. | 18+ Only
+                &copy; {% now "Y" %} {{ site_name }}. All rights reserved. | 18+ Only | <a href="{% url 'videos:home' %}">{{ site_domain }}</a>
             </div>
         </div>
     </footer>
@@ -203,13 +231,32 @@
     {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        "name": "goNuts",
-        "description": "Your ultimate adult universe. Stream premium adult content, explore diverse categories, and discover exclusive videos.",
-        "url": "{{ request.scheme }}://{{ request.get_host }}",
+        "name": "{{ site_name }}",
+        "alternateName": "{{ site_name }} - {{ site_tagline }}",
+        "description": "{{ site_description }}",
+        "url": "{{ site_url }}",
+        "inLanguage": "en-US",
         "potentialAction": {
             "@type": "SearchAction",
-            "target": "{{ request.scheme }}://{{ request.get_host }}{% url 'videos:search' %}?q={search_term_string}",
+            "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "{{ site_url }}{% url 'videos:search' %}?q={search_term_string}"
+            },
             "query-input": "required name=search_term_string"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "{{ site_name }}",
+            "url": "{{ site_url }}",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "{{ site_url }}{% static 'images/logo.png' %}"
+            },
+            "sameAs": [
+                "{{ social_links.twitter }}",
+                "{{ social_links.instagram }}",
+                "{{ social_links.telegram }}"
+            ]
         },
         "genre": "Adult Entertainment",
         "audience": {
@@ -218,6 +265,7 @@
         }
     }
     </script>
+    {% block extra_structured_data %}{% endblock %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>

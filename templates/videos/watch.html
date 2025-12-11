@@ -1,7 +1,18 @@
 {% extends 'base.html' %}
 {% load humanize %}
 
-{% block title %}{{ video.title }} - StreamHub{% endblock %}
+{% block title %}{{ video.title }} - Watch Free on {{ site_name }}{% endblock %}
+{% block meta_description %}Watch {{ video.title }} for free on {{ site_name }}. {{ video.views|intcomma }} views. HD quality adult video. Stream now!{% endblock %}
+{% block meta_keywords %}{{ video.title }}, {{ video.category.name }}, free adult video, HD porn, {{ site_name }}{% endblock %}
+
+{% block og_type %}video.other{% endblock %}
+{% block og_title %}{{ video.title }} - {{ site_name }}{% endblock %}
+{% block og_description %}Watch {{ video.title }} for free. {{ video.views|intcomma }} views. HD adult video streaming.{% endblock %}
+{% block og_image %}{{ video.thumbnail.url }}{% endblock %}
+
+{% block twitter_title %}{{ video.title }} - {{ site_name }}{% endblock %}
+{% block twitter_description %}Watch {{ video.title }} for free on {{ site_name }}{% endblock %}
+{% block twitter_image %}{{ video.thumbnail.url }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -283,6 +294,36 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    "name": "{{ video.title|escapejs }}",
+    "description": "{{ video.description|default:video.title|escapejs }}",
+    "thumbnailUrl": "{{ video.thumbnail.url }}",
+    "uploadDate": "{{ video.created_at|date:'c' }}",
+    "duration": "PT{{ video.duration_seconds|default:0 }}S",
+    "contentUrl": "{{ video.video_file.url }}",
+    "embedUrl": "{{ request.build_absolute_uri }}",
+    "interactionStatistic": {
+        "@type": "InteractionCounter",
+        "interactionType": { "@type": "WatchAction" },
+        "userInteractionCount": {{ video.views }}
+    },
+    "publisher": {
+        "@type": "Organization",
+        "name": "{{ site_name }}",
+        "logo": {
+            "@type": "ImageObject",
+            "url": "{{ site_url }}{% static 'images/logo.png' %}"
+        }
+    },
+    "isFamilyFriendly": false
+}
+</script>
 {% endblock %}
 
 {% block extra_js %}
