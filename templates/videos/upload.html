@@ -390,6 +390,8 @@ uploadForm.addEventListener('submit', function(e) {
 
     const formData = new FormData(this);
     const videoFile = formData.get('video_file');
+    // Get CSRF token from form field (cookie is HttpOnly so can't read from JS)
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
     if (!videoFile || !videoFile.size) {
         alert('Please select a video file');
@@ -449,31 +451,60 @@ uploadForm.addEventListener('submit', function(e) {
     });
 
     xhr.addEventListener('load', function() {
-        try {
-            const response = JSON.parse(xhr.responseText);
-            if (response.success) {
-                showUploadSuccess(response.redirect_url);
-            } else {
-                // Handle validation errors
+        console.log('Upload response:', xhr.status, xhr.responseText ? xhr.responseText.substring(0, 500) : '(empty)');
+
+        if (xhr.status === 200) {
+            try {
+                const response = JSON.parse(xhr.responseText);
+                if (response.success) {
+                    showUploadSuccess(response.redirect_url);
+                } else {
+                    // Handle validation errors
+                    let errorMsg = 'Validation error';
+                    if (response.errors) {
+                        const errors = Object.entries(response.errors);
+                        if (errors.length > 0) {
+                            const [field, msgs] = errors[0];
+                            errorMsg = field === '__all__' ? msgs[0] : `${field}: ${msgs[0]}`;
+                        }
+                    }
+                    showUploadError(errorMsg);
+                }
+            } catch (e) {
+                // If response is not JSON, check if redirect happened (success)
+                if (xhr.responseURL && xhr.responseURL.includes('my-videos')) {
+                    showUploadSuccess();
+                } else {
+                    // Might be HTML response - could be success or error page
+                    showUploadSuccess();
+                }
+            }
+        } else if (xhr.status === 400) {
+            try {
+                const response = JSON.parse(xhr.responseText);
                 let errorMsg = 'Validation error';
                 if (response.errors) {
-                    const firstError = Object.values(response.errors)[0];
-                    if (firstError && firstError.length > 0) {
-                        errorMsg = firstError[0];
+                    const errors = Object.entries(response.errors);
+                    if (errors.length > 0) {
+                        const [field, msgs] = errors[0];
+                        errorMsg = field === '__all__' ? msgs[0] : `${field}: ${msgs[0]}`;
                     }
                 }
                 showUploadError(errorMsg);
+            } catch (e) {
+                showUploadError('Validation failed. Please check your input.');
             }
-        } catch (e) {
-            // If response is not JSON, check if redirect happened (success)
-            if (xhr.responseURL && xhr.responseURL.includes('my-videos')) {
-                showUploadSuccess();
-            } else if (xhr.status === 200) {
-                // Might be HTML response after redirect
-                showUploadSuccess();
-            } else {
-                showUploadError('Server returned an unexpected response.');
+        } else if (xhr.status === 403) {
+            showUploadError('Permission denied. Please log in and try again.');
+        } else if (xhr.status === 500) {
+            try {
+                const response = JSON.parse(xhr.responseText);
+                showUploadError(response.errors?.__all__?.[0] || 'Server error occurred.');
+            } catch (e) {
+                showUploadError('Server error occurred. Please try again.');
             }
+        } else {
+            showUploadError(`Upload failed with status ${xhr.status}`);
         }
     });
 
@@ -491,6 +522,7 @@ uploadForm.addEventListener('submit', function(e) {
 
     xhr.open('POST', uploadForm.action || window.location.href);
     xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.setRequestHeader('X-CSRFToken', csrfToken);
     xhr.timeout = 600000; // 10 minute timeout
     xhr.send(formData);
 });

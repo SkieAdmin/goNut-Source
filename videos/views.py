@@ -1155,37 +1155,56 @@ def get_list_status(request, video_id):
 @login_required
 def upload_video_view(request):
     """Upload a new video"""
+    import logging
+    logger = logging.getLogger(__name__)
+
+    # Check if it's an AJAX request
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     if request.method == 'POST':
-        form = VideoUploadForm(request.POST, request.FILES)
+        try:
+            logger.info(f"Upload attempt by user: {request.user}")
+            logger.info(f"POST data keys: {list(request.POST.keys())}")
+            logger.info(f"FILES keys: {list(request.FILES.keys())}")
 
-        # Check if it's an AJAX request
-        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+            form = VideoUploadForm(request.POST, request.FILES)
 
-        if form.is_valid():
-            video = form.save(commit=False)
-            video.uploader = request.user
-            video.save()
-            form.save_m2m()  # Save tags
+            if form.is_valid():
+                video = form.save(commit=False)
+                video.uploader = request.user
+                video.save()
+                form.save_m2m()  # Save tags
 
-            # Re-save to trigger slug generation with actual ID
-            video.save()
+                # Re-save to trigger slug generation with actual ID
+                video.save()
 
+                logger.info(f"Video uploaded successfully: {video.title}")
+
+                if is_ajax:
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Video uploaded successfully!',
+                        'redirect_url': reverse('videos:my_videos')
+                    })
+
+                messages.success(request, 'Video uploaded successfully!')
+                return redirect('videos:my_videos')
+            else:
+                logger.warning(f"Form validation errors: {form.errors}")
+                if is_ajax:
+                    errors = {field: [str(e) for e in errs] for field, errs in form.errors.items()}
+                    return JsonResponse({
+                        'success': False,
+                        'errors': errors
+                    }, status=400)
+        except Exception as e:
+            logger.exception(f"Upload exception: {str(e)}")
             if is_ajax:
-                return JsonResponse({
-                    'success': True,
-                    'message': 'Video uploaded successfully!',
-                    'redirect_url': reverse('videos:my_videos')
-                })
-
-            messages.success(request, 'Video uploaded successfully!')
-            return redirect('videos:my_videos')
-        else:
-            if is_ajax:
-                errors = {field: [str(e) for e in errs] for field, errs in form.errors.items()}
                 return JsonResponse({
                     'success': False,
-                    'errors': errors
-                }, status=400)
+                    'errors': {'__all__': [str(e)]}
+                }, status=500)
+            raise
     else:
         form = VideoUploadForm()
 

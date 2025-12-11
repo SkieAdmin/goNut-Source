@@ -64,6 +64,7 @@ class VideoUploadForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['category'].queryset = Category.objects.all()
         self.fields['category'].empty_label = 'Select a category'
+        self.fields['category'].required = False  # Make category optional
         self.fields['description'].required = False
 
         # If editing, populate tags_input
