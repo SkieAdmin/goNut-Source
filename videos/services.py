@@ -18,7 +18,7 @@ class EpornerAPI:
     ]
 
     @classmethod
-    @cached(prefix='eporner:search', ttl=300)
+    @cached(prefix='eporner:search', ttl=3600)  # 1 hour cache
     def search(cls, query="", page=1, per_page=24, order="latest", gay=0, lq=0):
         """
         Search for videos
@@ -51,7 +51,7 @@ class EpornerAPI:
             return None
 
     @classmethod
-    @cached(prefix='eporner:video_by_id', ttl=600)
+    @cached(prefix='eporner:video_by_id', ttl=3600)  # 1 hour cache
     def get_video_by_id(cls, video_id):
         """Get single video details by ID"""
         url = f"https://www.eporner.com/api/v2/video/id/?id={video_id}&thumbsize=big&format=json"
@@ -79,7 +79,7 @@ class EpornerAPI:
         return cls.search(page=page, per_page=per_page, order='latest', gay=gay)
 
     @classmethod
-    @cached(prefix='eporner:top_rated', ttl=600)
+    @cached(prefix='eporner:top_rated', ttl=3600)  # 1 hour cache
     def get_top_rated(cls, page=1, per_page=24, gay=0):
         """Get top rated videos"""
         return cls.search(page=page, per_page=per_page, order='top-rated', gay=gay)
@@ -301,14 +301,80 @@ class EpornerHentaiAPI:
 
 class RedTubeAPI:
     """
-    RedTube Public API
+    RedTube Public API with automatic fallback to Eporner
     Documentation: https://api.redtube.com/
     No API key required!
+
+    Note: RedTube API has a daily limit of 30,000 queries.
+    When limit is reached, automatically falls back to Eporner API.
+    Cache TTL is set to 12 hours to minimize API calls.
     """
     BASE_URL = "https://api.redtube.com/"
+    _rate_limited = False  # Track if we're rate limited today
+    _rate_limit_date = None  # Track when rate limit was hit
+
+    # Cache TTL: 12 hours = 43200 seconds
+    CACHE_TTL = 43200
 
     @classmethod
-    @cached(prefix='redtube:search', ttl=300)
+    def _check_rate_limit_reset(cls):
+        """Reset rate limit flag if it's a new day"""
+        from datetime import date
+        today = date.today()
+        if cls._rate_limit_date and cls._rate_limit_date != today:
+            print("[RedTube API] New day - resetting rate limit flag")
+            cls._rate_limited = False
+            cls._rate_limit_date = None
+
+    @classmethod
+    def _fallback_to_eporner(cls, query="", page=1, ordering="newest"):
+        """Fallback to Eporner API when RedTube is rate limited"""
+        print("[RedTube API] Rate limited - falling back to Eporner API")
+
+        # Map RedTube ordering to Eporner ordering
+        order_map = {
+            'newest': 'latest',
+            'mostviewed': 'most-popular',
+            'rating': 'top-rated',
+        }
+        eporner_order = order_map.get(ordering, 'latest')
+
+        # Get results from Eporner
+        eporner_result = EpornerAPI.search(query=query, page=page, order=eporner_order, per_page=20)
+
+        if not eporner_result or 'videos' not in eporner_result:
+            return {'videos': [], 'count': 0, 'fallback': True}
+
+        # Convert Eporner format to RedTube-like format for consistency
+        normalized = []
+        for video in eporner_result.get('videos', []):
+            # Get the best thumbnail
+            thumbs = video.get('thumbs', [])
+            thumb_url = thumbs[0].get('src', '') if thumbs else video.get('default_thumb', {}).get('src', '')
+
+            normalized.append({
+                'id': video.get('id'),
+                'title': video.get('title', ''),
+                'url': video.get('url', ''),
+                'thumb': thumb_url,
+                'thumbs': thumbs,
+                'publish_date': video.get('added', ''),
+                'duration': video.get('length_min', ''),
+                'views': video.get('views', 0),
+                'rating': float(video.get('rate', 0)),
+                'ratings': 0,
+                'tags': video.get('keywords', '').split(',') if video.get('keywords') else [],
+                'pornstars': [],
+            })
+
+        return {
+            'videos': normalized,
+            'count': eporner_result.get('total_count', len(normalized)),
+            'fallback': True  # Flag to indicate this is fallback data
+        }
+
+    @classmethod
+    @cached(prefix='redtube:search', ttl=43200)  # 12 hours cache
     def search(cls, query="", category="", tags="", stars="", page=1, ordering="newest", period="alltime"):
         """
         Search for videos
@@ -322,6 +388,13 @@ class RedTubeAPI:
             ordering: newest, mostviewed, rating
             period: weekly, monthly, alltime
         """
+        # Check if rate limit should be reset (new day)
+        cls._check_rate_limit_reset()
+
+        # If we know we're rate limited, go straight to fallback
+        if cls._rate_limited:
+            return cls._fallback_to_eporner(query, page, ordering)
+
         params = {
             'data': 'redtube.Videos.searchVideos',
             'output': 'json',
@@ -339,9 +412,24 @@ class RedTubeAPI:
         params = {k: v for k, v in params.items() if v}
 
         try:
-            response = requests.get(cls.BASE_URL, params=params, timeout=10)
+            # Add headers to appear more like a browser (helps avoid IP blocking)
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Referer': 'https://www.redtube.com/',
+            }
+            response = requests.get(cls.BASE_URL, params=params, headers=headers, timeout=15)
             response.raise_for_status()
             data = response.json()
+
+            # Check for rate limit error (code 1005)
+            if data.get('code') == 1005 or 'limit' in data.get('message', '').lower():
+                from datetime import date
+                print(f"[RedTube API] Rate limit reached: {data.get('message')}")
+                cls._rate_limited = True
+                cls._rate_limit_date = date.today()
+                return cls._fallback_to_eporner(query, page, ordering)
 
             videos = data.get('videos', [])
             print(f"[RedTube API] Found {len(videos)} videos")
@@ -368,16 +456,18 @@ class RedTubeAPI:
             return {
                 'videos': normalized,
                 'count': int(data.get('count', len(normalized))),
+                'fallback': False
             }
         except requests.RequestException as e:
             print(f"[RedTube API Error] {e}")
-            return None
+            # On network errors, try fallback
+            return cls._fallback_to_eporner(query, page, ordering)
         except Exception as e:
             print(f"[RedTube API Exception] {e}")
-            return None
+            return cls._fallback_to_eporner(query, page, ordering)
 
     @classmethod
-    @cached(prefix='redtube:video_by_id', ttl=600)
+    @cached(prefix='redtube:video_by_id', ttl=43200)  # 12 hours cache
     def get_video_by_id(cls, video_id):
         """Get single video details by ID"""
         params = {
@@ -537,7 +627,7 @@ class PornstarService:
     ]
 
     @classmethod
-    @cached(prefix='pornstar:all', ttl=1800)
+    @cached(prefix='pornstar:all', ttl=43200)  # 12 hours cache
     def get_all(cls):
         """Get all pornstars with avatar URLs"""
         stars = []
@@ -565,7 +655,7 @@ class PornstarService:
         return None
 
     @classmethod
-    @cached(prefix='pornstar:videos', ttl=300)
+    @cached(prefix='pornstar:videos', ttl=3600)  # 1 hour cache
     def get_videos(cls, name, page=1, per_page=24, gay=0):
         """Get videos featuring a pornstar"""
         return EpornerAPI.search(query=name, page=page, per_page=per_page, gay=gay, order='most-popular')
