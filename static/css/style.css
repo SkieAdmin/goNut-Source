@@ -246,18 +246,32 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    background: var(--bg-glass);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    height: 100vh;
+    height: 100dvh;
+    background: var(--bg-primary);
     padding: 1rem;
-    z-index: 1050;
+    z-index: 9999;
     transform: translateY(-100%);
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    border-bottom: 1px solid var(--border-color);
+    opacity: 0;
+    visibility: hidden;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, visibility 0.3s ease;
 }
 
 .mobile-search-overlay.active {
     transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+}
+
+.mobile-search-overlay .search-box {
+    background: var(--bg-input);
+    border: 2px solid var(--primary);
+    border-radius: 12px;
+}
+
+.mobile-search-overlay .search-box input {
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
 }
 
 /* Bottom Navigation Bar (Mobile) */

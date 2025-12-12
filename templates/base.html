@@ -190,13 +190,15 @@
 
     <!-- Mobile Search Overlay -->
     <div class="mobile-search-overlay" id="mobileSearchOverlay">
-        <div class="container">
-            <div class="d-flex align-items-center gap-3 mb-3">
+        <div class="container py-3">
+            <div class="d-flex align-items-center gap-3">
                 <form class="flex-grow-1 search-box" action="{% url 'videos:search' %}" method="GET">
-                    <input type="text" name="q" placeholder="Search..." value="{{ request.GET.q }}">
+                    <input type="text" name="q" placeholder="Search videos, stars..." value="{{ request.GET.q }}" autofocus>
                     <button type="submit"><i class="bi bi-search"></i></button>
                 </form>
-                <button class="btn btn-link text-white p-0" onclick="toggleMobileSearch()">Cancel</button>
+                <button type="button" class="btn btn-link text-white p-0 fs-6" onclick="toggleMobileSearch()" style="white-space: nowrap;">
+                    Cancel
+                </button>
             </div>
         </div>
     </div>
@@ -253,8 +255,31 @@
     <script>
         function toggleMobileSearch() {
             const overlay = document.getElementById('mobileSearchOverlay');
-            overlay.classList.toggle('active');
+            const isActive = overlay.classList.toggle('active');
+
+            if (isActive) {
+                // Focus the search input when opening
+                const input = overlay.querySelector('input[name="q"]');
+                if (input) {
+                    setTimeout(() => input.focus(), 100);
+                }
+                // Prevent body scroll
+                document.body.style.overflow = 'hidden';
+            } else {
+                // Restore body scroll
+                document.body.style.overflow = '';
+            }
         }
+
+        // Close search overlay on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const overlay = document.getElementById('mobileSearchOverlay');
+                if (overlay && overlay.classList.contains('active')) {
+                    toggleMobileSearch();
+                }
+            }
+        });
 
         // Sync mobile theme toggle with desktop one logic
         const mobileToggle = document.getElementById('themeToggleMobile');
