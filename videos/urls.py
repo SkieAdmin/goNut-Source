@@ -30,6 +30,9 @@ urlpatterns = [
     path('redtube/watch/<str:video_id>/', views.redtube_watch_view, name='redtube_watch'),
     path('redtube/search/', views.redtube_search_view, name='redtube_search'),
 
+    # xVideos section
+    path('xvideos/watch/<str:video_id>/', views.xvideos_watch_view, name='xvideos_watch'),
+
     # Pornstars section
     path('pornstars/', views.pornstars_view, name='pornstars'),
     path('pornstar/<slug:slug>/', views.pornstar_detail_view, name='pornstar_detail'),

@@ -1,0 +1,773 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ video.title }} - xVideos - {{ site_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .video-player-container {
+        background: #000;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    .video-player {
+        width: 100%;
+        aspect-ratio: 16/9;
+        background: #000;
+    }
+
+    .video-player iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+
+    .video-stats {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-secondary);
+    }
+
+    .stat-item i {
+        color: #dc2626;
+    }
+
+    .video-description {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .tag-link {
+        display: inline-block;
+        background: rgba(220, 38, 38, 0.2);
+        color: #dc2626;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        margin: 0.2rem;
+        transition: all 0.3s ease;
+    }
+
+    .tag-link:hover {
+        background: #dc2626;
+        color: white;
+    }
+
+    .related-video {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border-radius: 8px;
+        transition: background 0.3s ease;
+    }
+
+    .related-video:hover {
+        background: var(--bg-hover);
+    }
+
+    .related-thumbnail {
+        width: 120px;
+        flex-shrink: 0;
+        aspect-ratio: 16/9;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .related-thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* MAL-style List Controls */
+    .list-controls {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(220, 38, 38, 0.2);
+    }
+
+    .list-controls-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid rgba(220, 38, 38, 0.2);
+    }
+
+    .list-status-select {
+        background: var(--bg-secondary);
+        border: 1px solid rgba(220, 38, 38, 0.3);
+        color: var(--text-primary);
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        min-width: 160px;
+    }
+
+    .list-status-select:focus {
+        border-color: #dc2626;
+        box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+        outline: none;
+    }
+
+    .score-selector {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .score-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 2px solid rgba(220, 38, 38, 0.3);
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .score-btn:hover {
+        border-color: #dc2626;
+        color: #dc2626;
+    }
+
+    .score-btn.active {
+        background: #dc2626;
+        border-color: #dc2626;
+        color: white;
+    }
+
+    .list-added-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.75rem;
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        border-radius: 20px;
+        font-size: 0.8rem;
+    }
+
+    .list-remove-btn {
+        background: transparent;
+        border: none;
+        color: #ef4444;
+        cursor: pointer;
+        padding: 0.25rem;
+        font-size: 0.85rem;
+    }
+
+    .list-remove-btn:hover {
+        color: #dc2626;
+    }
+
+    /* Action buttons */
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        border: 1px solid rgba(220, 38, 38, 0.3);
+        background: var(--bg-card);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .action-btn:hover {
+        background: rgba(220, 38, 38, 0.1);
+        border-color: #dc2626;
+        color: #dc2626;
+    }
+
+    .action-btn.active {
+        background: #dc2626;
+        border-color: #dc2626;
+        color: white;
+    }
+
+    .action-btn.liked {
+        background: #22c55e;
+        border-color: #22c55e;
+        color: white;
+    }
+
+    .action-btn.disliked {
+        background: #ef4444;
+        border-color: #ef4444;
+        color: white;
+    }
+
+    .action-btn.favorited {
+        background: #ec4899;
+        border-color: #ec4899;
+        color: white;
+    }
+
+    /* Comments section */
+    .comments-section {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .comment-form textarea {
+        background: var(--bg-secondary);
+        border: 1px solid rgba(220, 38, 38, 0.3);
+        color: var(--text-primary);
+        border-radius: 8px;
+        resize: none;
+    }
+
+    .comment-form textarea:focus {
+        background: var(--bg-secondary);
+        border-color: #dc2626;
+        color: var(--text-primary);
+        box-shadow: 0 0 0 0.2rem rgba(220, 38, 38, 0.25);
+    }
+
+    .comment-item {
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .comment-item:last-child {
+        border-bottom: none;
+    }
+
+    .comment-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #dc2626, #7f1d1d);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Video Player -->
+        <div class="video-player-container">
+            <div class="video-player">
+                <iframe src="{{ embed_url }}" allowfullscreen></iframe>
+            </div>
+        </div>
+
+        <!-- Video Info -->
+        <div class="mb-3">
+            <h1 class="h4 mb-3">{{ video.title }}</h1>
+
+            <div class="video-stats mb-3">
+                <div class="stat-item">
+                    <i class="bi bi-eye"></i>
+                    <span>{{ video.views|default:0 }} views</span>
+                </div>
+                <div class="stat-item">
+                    <i class="bi bi-star"></i>
+                    <span>{{ video.rating|default:0 }}% rating</span>
+                </div>
+                <div class="stat-item">
+                    <i class="bi bi-clock"></i>
+                    <span>{{ video.duration }}</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2 flex-wrap">
+                {% if user.is_authenticated %}
+                <button class="action-btn {% if user_like == True %}liked{% endif %}" id="likeBtn" onclick="likeVideo()">
+                    <i class="bi bi-hand-thumbs-up{% if user_like == True %}-fill{% endif %}"></i>
+                    <span id="likesCount">{{ likes_count }}</span>
+                </button>
+                <button class="action-btn {% if user_like == False %}disliked{% endif %}" id="dislikeBtn" onclick="dislikeVideo()">
+                    <i class="bi bi-hand-thumbs-down{% if user_like == False %}-fill{% endif %}"></i>
+                    <span id="dislikesCount">{{ dislikes_count }}</span>
+                </button>
+                <button class="action-btn {% if is_favorited %}favorited{% endif %}" id="favoriteBtn" onclick="toggleFavorite()">
+                    <i class="bi bi-heart{% if is_favorited %}-fill{% endif %}"></i>
+                    <span>{% if is_favorited %}Saved{% else %}Save{% endif %}</span>
+                </button>
+                {% else %}
+                <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="action-btn">
+                    <i class="bi bi-hand-thumbs-up"></i>
+                    <span>{{ likes_count }}</span>
+                </a>
+                <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="action-btn">
+                    <i class="bi bi-hand-thumbs-down"></i>
+                    <span>{{ dislikes_count }}</span>
+                </a>
+                <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="action-btn">
+                    <i class="bi bi-heart"></i>
+                    <span>Save</span>
+                </a>
+                {% endif %}
+                <button class="action-btn" onclick="navigator.share({title: '{{ video.title }}', url: window.location.href})">
+                    <i class="bi bi-share"></i>
+                    <span>Share</span>
+                </button>
+                <a href="{{ video.url }}" target="_blank" class="action-btn">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                    <span>xVideos</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- MAL-style List Controls -->
+        {% if user.is_authenticated %}
+        <div class="list-controls" id="listControls">
+            <div class="list-controls-header">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-list-ul" style="color: #dc2626; font-size: 1.2rem;"></i>
+                    <strong>My List</strong>
+                    <span class="list-added-badge" id="listAddedBadge" style="display: none;">
+                        <i class="bi bi-check-circle"></i> In List
+                    </span>
+                </div>
+                <button class="list-remove-btn" id="removeFromListBtn" style="display: none;" onclick="removeFromList()" title="Remove from list">
+                    <i class="bi bi-trash"></i> Remove
+                </button>
+            </div>
+            <div class="row align-items-center g-3">
+                <div class="col-md-4">
+                    <label class="text-secondary small mb-1 d-block">Status</label>
+                    <select class="list-status-select" id="listStatus" onchange="updateListStatus()">
+                        <option value="">Not in List</option>
+                        <option value="watching">Currently Watching</option>
+                        <option value="completed">Completed</option>
+                        <option value="on_hold">On Hold</option>
+                        <option value="dropped">Dropped</option>
+                        <option value="plan_to_watch">Plan to Watch</option>
+                    </select>
+                </div>
+                <div class="col-md-8">
+                    <label class="text-secondary small mb-1 d-block">Your Score</label>
+                    <div class="score-selector" id="scoreSelector">
+                        <button class="score-btn" data-score="1" onclick="setScore(1)">1</button>
+                        <button class="score-btn" data-score="2" onclick="setScore(2)">2</button>
+                        <button class="score-btn" data-score="3" onclick="setScore(3)">3</button>
+                        <button class="score-btn" data-score="4" onclick="setScore(4)">4</button>
+                        <button class="score-btn" data-score="5" onclick="setScore(5)">5</button>
+                        <button class="score-btn" data-score="6" onclick="setScore(6)">6</button>
+                        <button class="score-btn" data-score="7" onclick="setScore(7)">7</button>
+                        <button class="score-btn" data-score="8" onclick="setScore(8)">8</button>
+                        <button class="score-btn" data-score="9" onclick="setScore(9)">9</button>
+                        <button class="score-btn" data-score="10" onclick="setScore(10)">10</button>
+                        <button class="score-btn" data-score="0" onclick="setScore(0)" title="Clear score">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="list-controls">
+            <div class="text-center py-2">
+                <i class="bi bi-list-ul me-2" style="color: #dc2626;"></i>
+                <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="text-danger">Login</a> to add this video to your list
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Comments Section -->
+        <div class="comments-section">
+            <h5 class="mb-4"><i class="bi bi-chat-dots me-2" style="color: #dc2626;"></i>Comments ({{ comments|length }})</h5>
+
+            {% if user.is_authenticated %}
+            <div class="comment-form mb-4">
+                <div class="d-flex gap-3">
+                    <div class="comment-avatar flex-shrink-0">
+                        {{ user.username|first|upper }}
+                    </div>
+                    <div class="flex-grow-1">
+                        <textarea class="form-control mb-2" id="commentInput" rows="2" placeholder="Add a comment..."></textarea>
+                        <button class="btn btn-danger btn-sm" onclick="addComment()">
+                            <i class="bi bi-send me-1"></i>Post Comment
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-secondary mb-4">
+                <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="text-danger">Login</a> to leave a comment
+            </div>
+            {% endif %}
+
+            <div id="commentsContainer">
+                {% for comment in comments %}
+                <div class="comment-item">
+                    <div class="d-flex gap-3">
+                        <div class="comment-avatar flex-shrink-0">
+                            {{ comment.user.username|first|upper }}
+                        </div>
+                        <div>
+                            <div class="mb-1">
+                                <strong class="text-white">{{ comment.user.username }}</strong>
+                                <small class="text-secondary ms-2">{{ comment.created_at|date:"M d, Y" }}</small>
+                            </div>
+                            <p class="mb-0 text-secondary">{{ comment.content }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-secondary text-center" id="noCommentsMsg">No comments yet. Be the first to comment!</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar - Related Videos -->
+    <div class="col-lg-4">
+        <div class="sidebar">
+            <h5 class="sidebar-title"><i class="bi bi-collection-play me-2"></i>More Videos</h5>
+            {% for rel_video in related_videos %}
+            <a href="{% url 'videos:xvideos_watch' rel_video.id %}?title={{ rel_video.title|urlencode }}&thumb={{ rel_video.thumb|urlencode }}&duration={{ rel_video.duration|urlencode }}&views={{ rel_video.views }}&url={{ rel_video.url|urlencode }}" class="related-video text-decoration-none">
+                <div class="related-thumbnail">
+                    <img src="{{ rel_video.thumb }}" alt="{{ rel_video.title }}" loading="lazy">
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="text-white mb-1" style="font-size: 0.85rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ rel_video.title }}</h6>
+                    <small class="text-secondary">
+                        <i class="bi bi-eye me-1"></i>{{ rel_video.views }}
+                    </small>
+                </div>
+            </a>
+            {% empty %}
+            <p class="text-secondary text-center py-3">No more videos</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% if user.is_authenticated %}
+{% block extra_js %}
+<script>
+const videoId = '{{ video.id }}';
+const videoTitle = '{{ video.title|escapejs }}';
+const videoThumb = '{{ video.thumb|escapejs }}';
+const videoDuration = '{{ video.duration|escapejs }}';
+const csrfToken = '{{ csrf_token }}';
+
+// Like/Dislike/Favorite Functions
+async function likeVideo() {
+    try {
+        const response = await fetch(`/api/video/${videoId}/like/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ source: 'xvideos' })
+        });
+        const data = await response.json();
+
+        document.getElementById('likesCount').textContent = data.likes;
+        document.getElementById('dislikesCount').textContent = data.dislikes;
+
+        const likeBtn = document.getElementById('likeBtn');
+        const dislikeBtn = document.getElementById('dislikeBtn');
+
+        if (data.status === 'liked') {
+            likeBtn.classList.add('liked');
+            likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up-fill';
+            dislikeBtn.classList.remove('disliked');
+            dislikeBtn.querySelector('i').className = 'bi bi-hand-thumbs-down';
+        } else {
+            likeBtn.classList.remove('liked');
+            likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up';
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function dislikeVideo() {
+    try {
+        const response = await fetch(`/api/video/${videoId}/dislike/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ source: 'xvideos' })
+        });
+        const data = await response.json();
+
+        document.getElementById('likesCount').textContent = data.likes;
+        document.getElementById('dislikesCount').textContent = data.dislikes;
+
+        const likeBtn = document.getElementById('likeBtn');
+        const dislikeBtn = document.getElementById('dislikeBtn');
+
+        if (data.status === 'disliked') {
+            dislikeBtn.classList.add('disliked');
+            dislikeBtn.querySelector('i').className = 'bi bi-hand-thumbs-down-fill';
+            likeBtn.classList.remove('liked');
+            likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up';
+        } else {
+            dislikeBtn.classList.remove('disliked');
+            dislikeBtn.querySelector('i').className = 'bi bi-hand-thumbs-down';
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function toggleFavorite() {
+    try {
+        const response = await fetch(`/api/video/${videoId}/favorite/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                source: 'xvideos',
+                title: videoTitle,
+                thumbnail: videoThumb,
+                duration: videoDuration
+            })
+        });
+        const data = await response.json();
+
+        const favoriteBtn = document.getElementById('favoriteBtn');
+        if (data.status === 'added') {
+            favoriteBtn.classList.add('favorited');
+            favoriteBtn.querySelector('i').className = 'bi bi-heart-fill';
+            favoriteBtn.querySelector('span').textContent = 'Saved';
+            showToast('Added to favorites!', 'success');
+        } else {
+            favoriteBtn.classList.remove('favorited');
+            favoriteBtn.querySelector('i').className = 'bi bi-heart';
+            favoriteBtn.querySelector('span').textContent = 'Save';
+            showToast('Removed from favorites', 'success');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function addComment() {
+    const content = document.getElementById('commentInput').value.trim();
+    if (!content) return;
+
+    try {
+        const response = await fetch(`/api/video/${videoId}/comment/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                source: 'xvideos',
+                content: content
+            })
+        });
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            const noCommentsMsg = document.getElementById('noCommentsMsg');
+            if (noCommentsMsg) noCommentsMsg.remove();
+
+            const container = document.getElementById('commentsContainer');
+            const commentHtml = `
+                <div class="comment-item">
+                    <div class="d-flex gap-3">
+                        <div class="comment-avatar flex-shrink-0">
+                            ${data.comment.username[0].toUpperCase()}
+                        </div>
+                        <div>
+                            <div class="mb-1">
+                                <strong class="text-white">${data.comment.username}</strong>
+                                <small class="text-secondary ms-2">${data.comment.created_at}</small>
+                            </div>
+                            <p class="mb-0 text-secondary">${data.comment.content}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('afterbegin', commentHtml);
+            document.getElementById('commentInput').value = '';
+
+            const countEl = document.querySelector('.comments-section h5');
+            const currentCount = parseInt(countEl.textContent.match(/\d+/)?.[0] || 0);
+            countEl.innerHTML = `<i class="bi bi-chat-dots me-2" style="color: #dc2626;"></i>Comments (${currentCount + 1})`;
+
+            showToast('Comment posted!', 'success');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to post comment', 'danger');
+    }
+}
+
+// MAL-style List Management Functions
+let currentListStatus = '';
+let currentScore = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadListStatus();
+});
+
+async function loadListStatus() {
+    try {
+        const response = await fetch(`{% url 'videos:get_list_status' video_id='PLACEHOLDER' %}`.replace('PLACEHOLDER', videoId) + '?source=xvideos');
+        const data = await response.json();
+
+        if (data.in_list) {
+            currentListStatus = data.status;
+            currentScore = data.score;
+
+            document.getElementById('listStatus').value = data.status;
+
+            if (data.score) {
+                updateScoreButtons(data.score);
+            }
+
+            document.getElementById('listAddedBadge').style.display = 'inline-flex';
+            document.getElementById('removeFromListBtn').style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error loading list status:', error);
+    }
+}
+
+async function updateListStatus() {
+    const status = document.getElementById('listStatus').value;
+
+    if (!status) {
+        if (currentListStatus) {
+            removeFromList();
+        }
+        return;
+    }
+
+    try {
+        const response = await fetch('{% url "videos:add_to_list" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                video_id: videoId,
+                source: 'xvideos',
+                title: videoTitle,
+                thumbnail: videoThumb,
+                duration: videoDuration,
+                status: status
+            })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            currentListStatus = status;
+            document.getElementById('listAddedBadge').style.display = 'inline-flex';
+            document.getElementById('removeFromListBtn').style.display = 'block';
+            showToast(data.created ? 'Added to list!' : 'Status updated!', 'success');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to update list', 'danger');
+    }
+}
+
+async function setScore(score) {
+    if (!currentListStatus) {
+        showToast('Add to list first to set a score', 'warning');
+        return;
+    }
+
+    try {
+        const response = await fetch('{% url "videos:update_list_entry" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                video_id: videoId,
+                source: 'xvideos',
+                score: score === 0 ? null : score
+            })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            currentScore = score === 0 ? null : score;
+            updateScoreButtons(score);
+            showToast(score === 0 ? 'Score cleared!' : `Rated ${score}/10!`, 'success');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to update score', 'danger');
+    }
+}
+
+function updateScoreButtons(score) {
+    document.querySelectorAll('#scoreSelector .score-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (parseInt(btn.dataset.score) === score) {
+            btn.classList.add('active');
+        }
+    });
+}
+
+async function removeFromList() {
+    if (!confirm('Remove this video from your list?')) return;
+
+    try {
+        const response = await fetch('{% url "videos:remove_from_list" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                video_id: videoId,
+                source: 'xvideos'
+            })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            currentListStatus = '';
+            currentScore = null;
+            document.getElementById('listStatus').value = '';
+            document.getElementById('listAddedBadge').style.display = 'none';
+            document.getElementById('removeFromListBtn').style.display = 'none';
+            updateScoreButtons(0);
+            showToast('Removed from list', 'success');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to remove from list', 'danger');
+    }
+}
+</script>
+{% endblock extra_js %}
+{% endif %}

@@ -13,7 +13,7 @@ from .models import (
     APIVideoView, APIVideoLike, APIVideoFavorite, APIVideoComment, VideoList
 )
 from .forms import VideoUploadForm, VideoEditForm
-from .services import EpornerAPI, HanimeAPI, RedTubeAPI, PornstarService, parse_duration, get_embed_url, get_quality_label
+from .services import EpornerAPI, HanimeAPI, RedTubeAPI, XVideosAPI, PornstarService, parse_duration, get_embed_url, get_quality_label
 
 
 def get_user_gay_param(request):
@@ -62,6 +62,10 @@ def home_view(request):
     redtube_trending = RedTubeAPI.get_trending(page=1)
     redtube_latest = RedTubeAPI.get_latest(page=1)
 
+    # Get videos from xVideos
+    xvideos_trending = XVideosAPI.get_trending(page=0)
+    xvideos_latest = XVideosAPI.get_latest(page=0)
+
     # Process Eporner videos - add source tag and watch URL
     def process_eporner(videos):
         processed = []
@@ -96,20 +100,51 @@ def home_view(request):
             })
         return processed
 
+    # Process xVideos videos - normalize format and add watch URL with fallback params
+    def process_xvideos(videos):
+        processed = []
+        for v in videos:
+            # Build URL with fallback query params
+            params = urlencode({
+                'title': v.get('title', ''),
+                'thumb': v.get('thumb', ''),
+                'duration': v.get('duration', ''),
+                'views': v.get('views', 0),
+                'rating': v.get('rating', 0),
+                'url': v.get('url', ''),
+            })
+            processed.append({
+                'id': v.get('id'),
+                'title': v.get('title', ''),
+                'default_thumb': {'src': v.get('thumb', '')},
+                'views': v.get('views', 0),
+                'rate': v.get('rating', 0),
+                'length_min': v.get('duration', ''),
+                'keywords': '',
+                'source': 'xvideos',
+                'watch_url': f"/xvideos/watch/{v.get('id')}/?{params}"
+            })
+        return processed
+
     # Mix trending videos
     trending_eporner = process_eporner(eporner_trending.get('videos', [])[:6] if eporner_trending else [])
     trending_redtube = process_redtube(redtube_trending.get('videos', [])[:6] if redtube_trending else [])
-    mixed_trending = trending_eporner + trending_redtube
+    trending_xvideos = process_xvideos(xvideos_trending.get('videos', [])[:6] if xvideos_trending else [])
+    mixed_trending = trending_eporner + trending_redtube + trending_xvideos
     random.shuffle(mixed_trending)
 
     # Mix newest videos
     newest_eporner = process_eporner(eporner_latest.get('videos', [])[:6] if eporner_latest else [])
     newest_redtube = process_redtube(redtube_latest.get('videos', [])[:6] if redtube_latest else [])
-    mixed_newest = newest_eporner + newest_redtube
+    newest_xvideos = process_xvideos(xvideos_latest.get('videos', [])[:6] if xvideos_latest else [])
+    mixed_newest = newest_eporner + newest_redtube + newest_xvideos
     random.shuffle(mixed_newest)
 
     # Featured from top rated (Eporner only as they have better featured content)
     featured_videos = process_eporner(eporner_top.get('videos', [])[:8] if eporner_top else [])
+
+    # xVideos section - dedicated section
+    xvideos_videos = process_xvideos(xvideos_trending.get('videos', [])[:12] if xvideos_trending else [])
 
     # Get popular pornstars for the horizontal scroller
     popular_pornstars = PornstarService.get_popular(limit=20)
@@ -119,6 +154,7 @@ def home_view(request):
         'trending_videos': mixed_trending[:12],
         'newest_videos': mixed_newest[:12],
         'featured_videos': featured_videos,
+        'xvideos_videos': xvideos_videos,  # Dedicated xVideos section
         'popular_pornstars': popular_pornstars,
     }
     return render(request, 'videos/home.html', context)
@@ -632,6 +668,64 @@ def redtube_watch_view(request, video_id):
         'dislikes_count': dislikes_count,
     }
     return render(request, 'videos/redtube/watch.html', context)
+
+
+def xvideos_watch_view(request, video_id):
+    """Watch xVideos video"""
+    # Try to get video info from query parameters (passed from video cards)
+    video_data = {
+        'id': video_id,
+        'title': request.GET.get('title', f'xVideos Video {video_id}'),
+        'thumb': request.GET.get('thumb', ''),
+        'duration': request.GET.get('duration', ''),
+        'views': request.GET.get('views', '0'),
+        'rating': request.GET.get('rating', '0'),
+        'url': request.GET.get('url', f'https://www.xvideos.com/video{video_id}/'),
+    }
+
+    # Create embed URL
+    embed_url = f"https://www.xvideos.com/embedframe/{video_id}"
+
+    # Log view for authenticated users (history tracking)
+    if request.user.is_authenticated:
+        APIVideoView.objects.create(
+            user=request.user,
+            video_id=video_id,
+            source='xvideos',
+            title=video_data.get('title', ''),
+            thumbnail=video_data.get('thumb', ''),
+            duration=video_data.get('duration', '')
+        )
+
+    # Get user interaction data
+    user_like = None
+    is_favorited = False
+    if request.user.is_authenticated:
+        like_obj = APIVideoLike.objects.filter(user=request.user, video_id=video_id, source='xvideos').first()
+        user_like = like_obj.is_like if like_obj else None
+        is_favorited = APIVideoFavorite.objects.filter(user=request.user, video_id=video_id, source='xvideos').exists()
+
+    # Get comments for this video
+    comments = APIVideoComment.objects.filter(video_id=video_id, source='xvideos', is_active=True).select_related('user')[:50]
+
+    # Count likes/dislikes from our database
+    likes_count = APIVideoLike.objects.filter(video_id=video_id, source='xvideos', is_like=True).count()
+    dislikes_count = APIVideoLike.objects.filter(video_id=video_id, source='xvideos', is_like=False).count()
+
+    # Get related videos from xVideos
+    related_data = XVideosAPI.get_trending(page=0)
+
+    context = {
+        'video': video_data,
+        'embed_url': embed_url,
+        'related_videos': related_data.get('videos', [])[:12] if related_data else [],
+        'user_like': user_like,
+        'is_favorited': is_favorited,
+        'comments': comments,
+        'likes_count': likes_count,
+        'dislikes_count': dislikes_count,
+    }
+    return render(request, 'videos/xvideos/watch.html', context)
 
 
 def redtube_search_view(request):
