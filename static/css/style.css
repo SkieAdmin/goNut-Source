@@ -145,13 +145,11 @@ body {
 @media (max-width: 1200px) {
     .search-container-desktop {
         max-width: 300px;
-        /* Reduce width on laptop screens */
         margin: 0 1rem;
     }
 
     .nav-link {
         padding: 0.5rem 0.5rem !important;
-        /* Tighter padding */
         font-size: 0.9rem;
     }
 }
