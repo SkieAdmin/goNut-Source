@@ -66,7 +66,7 @@
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-SS9MK9CZS2"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
+        function gtag() { dataLayer.push(arguments); }
         gtag('js', new Date());
         gtag('config', 'G-SS9MK9CZS2');
     </script>
@@ -83,106 +83,187 @@
 </head>
 
 <body>
+    <!-- Top Navbar (Desktop & Mobile Header) -->
     <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
+            <!-- Brand -->
             <a class="navbar-brand" href="{% url 'videos:home' %}">
-                <i class="bi bi-play-circle-fill me-2"></i>goNuts
+                <i class="bi bi-play-circle-fill me-2" style="color: var(--primary);"></i>goNuts
             </a>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <!-- Mobile Top Actions (Search Toggle, Theme Toggle) -->
+            <div class="mobile-top-actions">
+                <button class="btn btn-link text-white p-0" onclick="toggleMobileSearch()">
+                    <i class="bi bi-search fs-5"></i>
+                </button>
+                <button class="theme-toggle m-0 border-0" id="themeToggleMobile">
+                    <i class="bi bi-moon-fill"></i>
+                </button>
+            </div>
 
+            <!-- Desktop Content (Hidden on Mobile) -->
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
+                <!-- Desktop Links -->
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 navbar-nav-desktop">
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'videos:home' %}"><i class="bi bi-house me-1"></i>Home</a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}"
+                            href="{% url 'videos:home' %}">
+                            Home
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'videos:trending' %}"><i
-                                class="bi bi-fire me-1"></i>Trending</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'videos:newest' %}"><i class="bi bi-clock me-1"></i>Newest</a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'trending' %}active{% endif %}"
+                            href="{% url 'videos:trending' %}">
+                            Trending
+                        </a>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                            <i class="bi bi-grid me-1"></i>Categories
+                            Categories
                         </a>
-                        <ul class="dropdown-menu">
-                            {% for cat in nav_categories %}
-                            <li><a class="dropdown-item" href="{{ cat.get_absolute_url }}">{{ cat.name }}</a></li>
-                            {% empty %}
-                            <li><a class="dropdown-item" href="{% url 'videos:categories' %}">View All</a></li>
-                            {% endfor %}
-                            <li>
-                                <hr class="dropdown-divider" style="border-color: rgba(147, 51, 234, 0.3);">
-                            </li>
+                        <ul class="dropdown-menu shadow-lg border-0">
                             <li><a class="dropdown-item" href="{% url 'videos:categories' %}"><i
                                         class="bi bi-grid-3x3-gap me-2"></i>All Categories</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            {% for cat in nav_categories|slice:":5" %}
+                            <li><a class="dropdown-item" href="{{ cat.get_absolute_url }}">{{ cat.name }}</a></li>
+                            {% endfor %}
                         </ul>
                     </li>
                 </ul>
 
-                <form class="d-flex search-box me-3" action="{% url 'videos:search' %}" method="GET">
-                    <input type="text" name="q" placeholder="Search videos..." value="{{ request.GET.q }}">
-                    <button type="submit"><i class="bi bi-search"></i></button>
-                </form>
+                <!-- Desktop Centered Search -->
+                <div class="search-container-desktop">
+                    <form class="d-flex search-box" action="{% url 'videos:search' %}" method="GET">
+                        <input type="text" name="q" placeholder="Search for videos, stars..."
+                            value="{{ request.GET.q }}">
+                        <button type="submit"><i class="bi bi-search"></i></button>
+                    </form>
+                </div>
 
-                <ul class="navbar-nav">
+                <!-- Desktop Right Actions -->
+                <ul class="navbar-nav align-items-center gap-3">
+                    <li class="nav-item">
+                        <button class="theme-toggle" id="themeToggle" title="Toggle Theme">
+                            <i class="bi bi-moon-fill"></i>
+                        </button>
+                    </li>
+
                     {% if user.is_authenticated %}
-                    <li class="nav-item me-2">
-                        <a class="btn btn-purple btn-sm" href="{% url 'videos:upload' %}">
-                            <i class="bi bi-cloud-upload me-1"></i>Upload
+                    <li class="nav-item">
+                        <a class="btn btn-upload" href="{% url 'videos:upload' %}">
+                            <i class="bi bi-cloud-upload"></i> Upload
                         </a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle me-1"></i>{{ user.username }}
+                        <a class="nav-user-btn dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> {{ user.username }}
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2">
                             <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i
                                         class="bi bi-person me-2"></i>Profile</a></li>
                             <li><a class="dropdown-item" href="{% url 'videos:my_videos' %}"><i
-                                        class="bi bi-camera-video me-2"></i>My Videos</a></li>
-                            <li><a class="dropdown-item" href="{% url 'videos:my_list' %}"><i
-                                        class="bi bi-list-ul me-2"></i>My List</a></li>
-                            <li><a class="dropdown-item" href="{% url 'videos:user_history' %}"><i
-                                        class="bi bi-clock-history me-2"></i>Watch History</a></li>
+                                        class="bi bi-collection-play me-2"></i>My Videos</a></li>
                             <li><a class="dropdown-item" href="{% url 'videos:user_favorites' %}"><i
                                         class="bi bi-heart me-2"></i>Favorites</a></li>
-                            <li><a class="dropdown-item" href="{% url 'videos:user_liked' %}"><i
-                                        class="bi bi-hand-thumbs-up me-2"></i>Liked Videos</a></li>
-                            {% if user.is_staff %}
                             <li>
-                                <hr class="dropdown-divider" style="border-color: rgba(147, 51, 234, 0.3);">
+                                <hr class="dropdown-divider">
                             </li>
-                            <li><a class="dropdown-item" href="{% url 'admin:index' %}"><i
-                                        class="bi bi-gear me-2"></i>Admin</a></li>
-                            {% endif %}
-                            <li>
-                                <hr class="dropdown-divider" style="border-color: rgba(147, 51, 234, 0.3);">
-                            </li>
-                            <li><a class="dropdown-item" href="{% url 'accounts:logout' %}"><i
+                            <li><a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}"><i
                                         class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                         </ul>
                     </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="btn btn-outline-purple btn-sm me-2" href="{% url 'accounts:login' %}">Login</a>
+                        <a class="btn btn-ghost" href="{% url 'accounts:login' %}">Log In</a>
                     </li>
                     <li class="nav-item">
-                        <a class="btn btn-purple btn-sm" href="{% url 'accounts:register' %}">Sign Up</a>
+                        <a class="btn btn-purple" href="{% url 'accounts:register' %}">Sign Up</a>
                     </li>
                     {% endif %}
                 </ul>
-
-                <button class="theme-toggle" id="themeToggle" title="Toggle Theme">
-                    <i class="bi bi-moon-fill"></i>
-                </button>
             </div>
         </div>
     </nav>
+
+    <!-- Mobile Search Overlay -->
+    <div class="mobile-search-overlay" id="mobileSearchOverlay">
+        <div class="container">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <form class="flex-grow-1 search-box" action="{% url 'videos:search' %}" method="GET">
+                    <input type="text" name="q" placeholder="Search..." value="{{ request.GET.q }}">
+                    <button type="submit"><i class="bi bi-search"></i></button>
+                </form>
+                <button class="btn btn-link text-white p-0" onclick="toggleMobileSearch()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="bottom-nav">
+        <a href="{% url 'videos:home' %}"
+            class="bottom-nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+            <i class="bi bi-house-door{% if request.resolver_match.url_name == 'home' %}-fill{% endif %}"></i>
+            <span>Home</span>
+        </a>
+        <a href="{% url 'videos:trending' %}"
+            class="bottom-nav-item {% if request.resolver_match.url_name == 'trending' %}active{% endif %}">
+            <i class="bi bi-fire"></i>
+            <span>Trending</span>
+        </a>
+
+        {% if user.is_authenticated %}
+        <a href="{% url 'videos:upload' %}" class="bottom-nav-item">
+            <div class="bottom-nav-upload">
+                <i class="bi bi-plus-lg"></i>
+            </div>
+            <span>Upload</span>
+        </a>
+        {% else %}
+        <a href="{% url 'accounts:login' %}" class="bottom-nav-item">
+            <div class="bottom-nav-upload">
+                <i class="bi bi-person-plus"></i>
+            </div>
+            <span>Join</span>
+        </a>
+        {% endif %}
+
+        <a href="{% url 'videos:categories' %}"
+            class="bottom-nav-item {% if request.resolver_match.url_name == 'categories' %}active{% endif %}">
+            <i class="bi bi-grid{% if request.resolver_match.url_name == 'categories' %}-fill{% endif %}"></i>
+            <span>Browse</span>
+        </a>
+
+        {% if user.is_authenticated %}
+        <a href="{% url 'accounts:profile' %}"
+            class="bottom-nav-item {% if 'accounts' in request.path %}active{% endif %}">
+            <i class="bi bi-person{% if 'accounts' in request.path %}-fill{% endif %}"></i>
+            <span>Account</span>
+        </a>
+        {% else %}
+        <a href="{% url 'accounts:login' %}" class="bottom-nav-item">
+            <i class="bi bi-person"></i>
+            <span>Log In</span>
+        </a>
+        {% endif %}
+    </div>
+
+    <script>
+        function toggleMobileSearch() {
+            const overlay = document.getElementById('mobileSearchOverlay');
+            overlay.classList.toggle('active');
+        }
+
+        // Sync mobile theme toggle with desktop one logic
+        const mobileToggle = document.getElementById('themeToggleMobile');
+        if (mobileToggle) {
+            mobileToggle.addEventListener('click', () => {
+                document.getElementById('themeToggle').click();
+            });
+        }
+    </script>
 
     {% if messages %}
     <div class="container mt-3">
@@ -234,16 +315,21 @@
                 <div class="col-md-4 mb-3">
                     <h6 class="text-white mb-3">Stay Connected</h6>
                     <div class="d-flex gap-3">
-                        <a href="{{ social_links.twitter }}" class="fs-5" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><i class="bi bi-twitter-x"></i></a>
-                        <a href="{{ social_links.instagram }}" class="fs-5" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
-                        <a href="{{ social_links.telegram }}" class="fs-5" target="_blank" rel="noopener noreferrer" aria-label="Telegram"><i class="bi bi-telegram"></i></a>
-                        <a href="{{ social_links.discord }}" class="fs-5" target="_blank" rel="noopener noreferrer" aria-label="Discord"><i class="bi bi-discord"></i></a>
+                        <a href="{{ social_links.twitter }}" class="fs-5" target="_blank" rel="noopener noreferrer"
+                            aria-label="Twitter"><i class="bi bi-twitter-x"></i></a>
+                        <a href="{{ social_links.instagram }}" class="fs-5" target="_blank" rel="noopener noreferrer"
+                            aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+                        <a href="{{ social_links.telegram }}" class="fs-5" target="_blank" rel="noopener noreferrer"
+                            aria-label="Telegram"><i class="bi bi-telegram"></i></a>
+                        <a href="{{ social_links.discord }}" class="fs-5" target="_blank" rel="noopener noreferrer"
+                            aria-label="Discord"><i class="bi bi-discord"></i></a>
                     </div>
                 </div>
             </div>
             <hr style="border-color: rgba(147, 51, 234, 0.2);">
             <div class="text-center text-secondary small">
-                &copy; {% now "Y" %} {{ site_name }}. All rights reserved. | 18+ Only | <a href="{% url 'videos:home' %}">{{ site_domain }}</a>
+                &copy; {% now "Y" %} {{ site_name }}. All rights reserved. | 18+ Only | <a
+                    href="{% url 'videos:home' %}">{{ site_domain }}</a>
             </div>
         </div>
     </footer>
@@ -322,70 +408,73 @@
     </script>
     <!-- Global Add to List Function -->
     <script>
-    function addToList(videoId, source, title, thumbnail, duration, status) {
-        fetch('{% url "videos:add_to_list" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify({
-                video_id: videoId,
-                source: source,
-                title: title,
-                thumbnail: thumbnail,
-                duration: duration,
-                status: status
+        function addToList(videoId, source, title, thumbnail, duration, status) {
+            fetch('{% url "videos:add_to_list" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    video_id: videoId,
+                    source: source,
+                    title: title,
+                    thumbnail: thumbnail,
+                    duration: duration,
+                    status: status
+                })
             })
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                // Show success toast
-                showToast(data.created ? 'Added to list!' : 'List updated!', 'success');
-            } else {
-                showToast(data.error || 'Failed to update list', 'danger');
-            }
-        })
-        .catch(err => {
-            showToast('Network error', 'danger');
-        });
-    }
-
-    function showToast(message, type) {
-        // Create toast container if it doesn't exist
-        let container = document.getElementById('toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'toast-container';
-            container.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 9999;';
-            document.body.appendChild(container);
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success toast
+                        showToast(data.created ? 'Added to list!' : 'List updated!', 'success');
+                    } else {
+                        showToast(data.error || 'Failed to update list', 'danger');
+                    }
+                })
+                .catch(err => {
+                    showToast('Network error', 'danger');
+                });
         }
 
-        const toast = document.createElement('div');
-        toast.className = `alert alert-${type} alert-dismissible fade show`;
-        toast.style.cssText = 'min-width: 200px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);';
-        toast.innerHTML = `
+        function showToast(message, type) {
+            // Create toast container if it doesn't exist
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                container.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 9999;';
+                document.body.appendChild(container);
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} alert-dismissible fade show`;
+            toast.style.cssText = 'min-width: 200px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);';
+            toast.innerHTML = `
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
-        container.appendChild(toast);
+            container.appendChild(toast);
 
-        // Auto-dismiss after 3 seconds
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 150);
-        }, 3000);
-    }
+            // Auto-dismiss after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 150);
+            }, 3000);
+        }
     </script>
 
     <!-- 18+ Age Verification Modal -->
-    <div class="modal fade" id="ageVerificationModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="ageVerificationModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 2px solid rgba(147, 51, 234, 0.5); border-radius: 20px; overflow: hidden;">
+            <div class="modal-content"
+                style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 2px solid rgba(147, 51, 234, 0.5); border-radius: 20px; overflow: hidden;">
                 <div class="modal-body text-center p-0">
                     <!-- Header with gradient -->
-                    <div style="background: linear-gradient(135deg, #9333ea 0%, #7c3aed 50%, #6366f1 100%); padding: 2rem 1.5rem;">
+                    <div
+                        style="background: linear-gradient(135deg, #9333ea 0%, #7c3aed 50%, #6366f1 100%); padding: 2rem 1.5rem;">
                         <i class="bi bi-exclamation-triangle-fill" style="font-size: 3.5rem; color: #fbbf24;"></i>
                         <h2 class="mt-3 mb-0 text-white fw-bold">Adults Only</h2>
                     </div>
@@ -393,24 +482,26 @@
                     <!-- Content -->
                     <div class="p-4">
                         <div class="mb-4">
-                            <span style="font-size: 4rem; font-weight: 800; background: linear-gradient(135deg, #9333ea, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">18+</span>
+                            <span
+                                style="font-size: 4rem; font-weight: 800; background: linear-gradient(135deg, #9333ea, #ec4899); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;">18+</span>
                         </div>
 
                         <h4 class="text-white mb-3">Welcome to <span style="color: #9333ea;">goNuts</span></h4>
 
                         <p class="text-secondary mb-4" style="font-size: 0.95rem; line-height: 1.6;">
                             This website contains age-restricted content including nudity and explicit material.
-                            By entering, you confirm that you are <strong class="text-white">at least 18 years old</strong>
+                            By entering, you confirm that you are <strong class="text-white">at least 18 years
+                                old</strong>
                             and that viewing adult content is legal in your jurisdiction.
                         </p>
 
                         <div class="d-grid gap-2 mb-3">
                             <button type="button" class="btn btn-lg" onclick="acceptAge()"
-                                    style="background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%); color: white; border: none; border-radius: 12px; padding: 0.8rem 2rem; font-weight: 600; transition: all 0.3s ease;">
+                                style="background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%); color: white; border: none; border-radius: 12px; padding: 0.8rem 2rem; font-weight: 600; transition: all 0.3s ease;">
                                 <i class="bi bi-check-circle me-2"></i>I am 18 or older - Enter
                             </button>
                             <button type="button" class="btn btn-lg btn-outline-secondary" onclick="exitSite()"
-                                    style="border-radius: 12px; padding: 0.8rem 2rem;">
+                                style="border-radius: 12px; padding: 0.8rem 2rem;">
                                 <i class="bi bi-box-arrow-left me-2"></i>I am under 18 - Exit
                             </button>
                         </div>
@@ -431,6 +522,7 @@
             pointer-events: none;
             user-select: none;
         }
+
         .age-blur nav,
         .age-blur main,
         .age-blur footer {
@@ -438,41 +530,41 @@
         }
     </style>
     <script>
-    // Age Verification Logic
-    document.addEventListener('DOMContentLoaded', function() {
-        const hasVerified = localStorage.getItem('age_verified');
+        // Age Verification Logic
+        document.addEventListener('DOMContentLoaded', function () {
+            const hasVerified = localStorage.getItem('age_verified');
 
-        if (!hasVerified) {
-            // Blur the background content
-            document.querySelector('nav').classList.add('age-blur');
-            document.querySelector('main').classList.add('age-blur');
-            document.querySelector('footer').classList.add('age-blur');
-            document.body.style.overflow = 'hidden';
+            if (!hasVerified) {
+                // Blur the background content
+                document.querySelector('nav').classList.add('age-blur');
+                document.querySelector('main').classList.add('age-blur');
+                document.querySelector('footer').classList.add('age-blur');
+                document.body.style.overflow = 'hidden';
 
-            // Show age verification modal
-            const modal = new bootstrap.Modal(document.getElementById('ageVerificationModal'), {
-                backdrop: 'static',
-                keyboard: false
-            });
-            modal.show();
+                // Show age verification modal
+                const modal = new bootstrap.Modal(document.getElementById('ageVerificationModal'), {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+                modal.show();
+            }
+        });
+
+        function acceptAge() {
+            localStorage.setItem('age_verified', 'true');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('ageVerificationModal'));
+            modal.hide();
+
+            // Remove blur
+            document.querySelector('nav').classList.remove('age-blur');
+            document.querySelector('main').classList.remove('age-blur');
+            document.querySelector('footer').classList.remove('age-blur');
+            document.body.style.overflow = '';
         }
-    });
 
-    function acceptAge() {
-        localStorage.setItem('age_verified', 'true');
-        const modal = bootstrap.Modal.getInstance(document.getElementById('ageVerificationModal'));
-        modal.hide();
-
-        // Remove blur
-        document.querySelector('nav').classList.remove('age-blur');
-        document.querySelector('main').classList.remove('age-blur');
-        document.querySelector('footer').classList.remove('age-blur');
-        document.body.style.overflow = '';
-    }
-
-    function exitSite() {
-        window.location.href = 'https://www.google.com';
-    }
+        function exitSite() {
+            window.location.href = 'https://www.google.com';
+        }
     </script>
 
     {% block extra_js %}{% endblock %}

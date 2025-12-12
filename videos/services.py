@@ -1,5 +1,6 @@
+import re
 import requests
-from urllib.parse import urlencode
+from urllib.parse import urlencode, quote_plus
 from .cache import cached
 
 
@@ -553,6 +554,281 @@ class RedTubeAPI:
     def get_top_rated(cls, page=1):
         """Get top rated videos"""
         return cls.search(page=page, ordering='rating')
+
+
+class XVideosAPI:
+    """
+    xVideos Scraper API
+    No official API - uses web scraping with predictable URL patterns
+    """
+    BASE_URL = "https://www.xvideos.com"
+
+    CATEGORIES = [
+        'amateur', 'anal', 'asian', 'babe', 'bbw', 'big-tits', 'blonde',
+        'blowjob', 'brunette', 'creampie', 'ebony', 'hardcore', 'hd-videos',
+        'latina', 'lesbian', 'milf', 'pornstar', 'pov', 'redhead', 'teen'
+    ]
+
+    @classmethod
+    def _get_headers(cls):
+        """Get browser-like headers to avoid blocking"""
+        return {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+        }
+
+    @classmethod
+    def _parse_duration(cls, duration_str):
+        """Parse duration string like '10 min' or '1h 30 min' to formatted string"""
+        if not duration_str:
+            return '0:00'
+        duration_str = duration_str.strip().lower()
+
+        # Handle formats like "10 min", "1h 30 min", "5min"
+        hours = 0
+        minutes = 0
+
+        h_match = re.search(r'(\d+)\s*h', duration_str)
+        m_match = re.search(r'(\d+)\s*min', duration_str)
+
+        if h_match:
+            hours = int(h_match.group(1))
+        if m_match:
+            minutes = int(m_match.group(1))
+
+        if hours:
+            return f"{hours}:{minutes:02d}:00"
+        return f"{minutes}:00"
+
+    @classmethod
+    def _parse_views(cls, views_str):
+        """Parse views string like '1.2M' or '500k' to integer"""
+        if not views_str:
+            return 0
+        views_str = views_str.strip().upper().replace(' ', '').replace('VIEWS', '')
+
+        try:
+            if 'M' in views_str:
+                return int(float(views_str.replace('M', '')) * 1000000)
+            elif 'K' in views_str:
+                return int(float(views_str.replace('K', '')) * 1000)
+            else:
+                return int(views_str.replace(',', ''))
+        except (ValueError, AttributeError):
+            return 0
+
+    @classmethod
+    def _extract_videos_from_html(cls, html):
+        """Extract video data from HTML using regex"""
+        videos = []
+
+        # Pattern to match video thumb blocks
+        # xVideos uses a specific HTML structure for video thumbnails
+        thumb_pattern = re.compile(
+            r'<div[^>]*class="[^"]*thumb-block[^"]*"[^>]*>.*?'
+            r'<a[^>]*href="(/video[^"]+)"[^>]*>.*?'
+            r'<img[^>]*(?:data-src|src)="([^"]+)"[^>]*>.*?'
+            r'<p[^>]*class="[^"]*title[^"]*"[^>]*><a[^>]*>([^<]+)</a>.*?'
+            r'(?:<span[^>]*class="[^"]*duration[^"]*"[^>]*>([^<]*)</span>)?',
+            re.DOTALL | re.IGNORECASE
+        )
+
+        # Alternative simpler pattern
+        video_pattern = re.compile(
+            r'<div[^>]*id="video_(\d+)"[^>]*>.*?'
+            r'<a[^>]*href="(/video[^"]+)"[^>]*title="([^"]*)"[^>]*>.*?'
+            r'<img[^>]*(?:data-src|src)="([^"]+)"[^>]*>.*?'
+            r'(?:<span[^>]*class="duration"[^>]*>([^<]*)</span>)?',
+            re.DOTALL | re.IGNORECASE
+        )
+
+        matches = video_pattern.findall(html)
+
+        if not matches:
+            # Try another pattern for search results
+            alt_pattern = re.compile(
+                r'<div[^>]*class="thumb"[^>]*>.*?'
+                r'<a[^>]*href="(/video[^"]+)"[^>]*>.*?'
+                r'<img[^>]*(?:data-src|src)="([^"]+)"[^>]*alt="([^"]*)"[^>]*>.*?'
+                r'<span[^>]*class="duration"[^>]*>([^<]*)</span>',
+                re.DOTALL | re.IGNORECASE
+            )
+            alt_matches = alt_pattern.findall(html)
+
+            for url, thumb, title, duration in alt_matches:
+                video_id = url.split('/')[-1].split('_')[0] if '/' in url else url
+                videos.append({
+                    'id': video_id,
+                    'title': title.strip() if title else 'Unknown',
+                    'url': f"{cls.BASE_URL}{url}",
+                    'thumb': thumb if thumb.startswith('http') else f"https:{thumb}",
+                    'duration': cls._parse_duration(duration),
+                    'views': 0,
+                    'rating': 0,
+                })
+        else:
+            for video_id, url, title, thumb, duration in matches:
+                videos.append({
+                    'id': video_id,
+                    'title': title.strip() if title else 'Unknown',
+                    'url': f"{cls.BASE_URL}{url}",
+                    'thumb': thumb if thumb.startswith('http') else f"https:{thumb}",
+                    'duration': cls._parse_duration(duration),
+                    'views': 0,
+                    'rating': 0,
+                })
+
+        return videos
+
+    @classmethod
+    @cached(prefix='xvideos:search', ttl=3600)  # 1 hour cache
+    def search(cls, query="", page=0, sort="relevance"):
+        """
+        Search for videos on xVideos
+
+        Args:
+            query: Search term
+            page: Page number (0-based)
+            sort: relevance, uploaddate, rating, length, views
+        """
+        try:
+            if query:
+                # Search URL format: /search/query/page
+                search_query = quote_plus(query)
+                url = f"{cls.BASE_URL}/?k={search_query}&p={page}"
+            else:
+                # Default to homepage or best videos
+                url = f"{cls.BASE_URL}/best/{page}" if page > 0 else f"{cls.BASE_URL}/best"
+
+            print(f"[xVideos] Fetching: {url}")
+            response = requests.get(url, headers=cls._get_headers(), timeout=15)
+            response.raise_for_status()
+
+            html = response.text
+            videos = cls._extract_videos_from_html(html)
+
+            print(f"[xVideos] Found {len(videos)} videos")
+
+            return {
+                'videos': videos,
+                'count': len(videos),
+                'page': page,
+            }
+        except requests.RequestException as e:
+            print(f"[xVideos Error] {e}")
+            return {'videos': [], 'count': 0, 'page': page}
+        except Exception as e:
+            print(f"[xVideos Exception] {e}")
+            return {'videos': [], 'count': 0, 'page': page}
+
+    @classmethod
+    @cached(prefix='xvideos:video', ttl=3600)  # 1 hour cache
+    def get_video_by_id(cls, video_url):
+        """Get video details by URL or ID"""
+        try:
+            # Handle both full URL and partial
+            if not video_url.startswith('http'):
+                url = f"{cls.BASE_URL}{video_url}" if video_url.startswith('/') else f"{cls.BASE_URL}/video{video_url}"
+            else:
+                url = video_url
+
+            response = requests.get(url, headers=cls._get_headers(), timeout=15)
+            response.raise_for_status()
+
+            html = response.text
+
+            # Extract title
+            title_match = re.search(r'<title>([^<]+)</title>', html)
+            title = title_match.group(1).replace(' - XVIDEOS.COM', '').strip() if title_match else 'Unknown'
+
+            # Extract thumbnail
+            thumb_match = re.search(r'<meta\s+property="og:image"\s+content="([^"]+)"', html)
+            thumb = thumb_match.group(1) if thumb_match else ''
+
+            # Extract duration
+            duration_match = re.search(r'"duration":\s*"?(\d+)"?', html)
+            duration_seconds = int(duration_match.group(1)) if duration_match else 0
+            minutes = duration_seconds // 60
+            seconds = duration_seconds % 60
+            duration = f"{minutes}:{seconds:02d}"
+
+            # Extract video ID from URL
+            id_match = re.search(r'/video(\d+)/', url)
+            video_id = id_match.group(1) if id_match else url.split('/')[-1]
+
+            # Extract embed URL
+            embed_url = f"{cls.BASE_URL}/embedframe/{video_id}"
+
+            return {
+                'id': video_id,
+                'title': title,
+                'url': url,
+                'embed_url': embed_url,
+                'thumb': thumb,
+                'duration': duration,
+                'views': 0,
+                'rating': 0,
+            }
+        except Exception as e:
+            print(f"[xVideos Error] get_video_by_id: {e}")
+            return None
+
+    @classmethod
+    def get_trending(cls, page=0):
+        """Get trending/best videos"""
+        return cls.search(page=page)
+
+    @classmethod
+    @cached(prefix='xvideos:latest', ttl=1800)  # 30 min cache
+    def get_latest(cls, page=0):
+        """Get newest videos"""
+        try:
+            url = f"{cls.BASE_URL}/new/{page}" if page > 0 else f"{cls.BASE_URL}/new"
+
+            response = requests.get(url, headers=cls._get_headers(), timeout=15)
+            response.raise_for_status()
+
+            videos = cls._extract_videos_from_html(response.text)
+
+            return {
+                'videos': videos,
+                'count': len(videos),
+                'page': page,
+            }
+        except Exception as e:
+            print(f"[xVideos Error] get_latest: {e}")
+            return {'videos': [], 'count': 0, 'page': page}
+
+    @classmethod
+    @cached(prefix='xvideos:category', ttl=3600)  # 1 hour cache
+    def get_by_category(cls, category, page=0):
+        """Get videos by category"""
+        try:
+            url = f"{cls.BASE_URL}/c/{category}/{page}" if page > 0 else f"{cls.BASE_URL}/c/{category}"
+
+            response = requests.get(url, headers=cls._get_headers(), timeout=15)
+            response.raise_for_status()
+
+            videos = cls._extract_videos_from_html(response.text)
+
+            return {
+                'videos': videos,
+                'count': len(videos),
+                'page': page,
+            }
+        except Exception as e:
+            print(f"[xVideos Error] get_by_category: {e}")
+            return {'videos': [], 'count': 0, 'page': page}
+
+    @classmethod
+    def get_embed_url(cls, video_id):
+        """Get embed URL for a video"""
+        return f"{cls.BASE_URL}/embedframe/{video_id}"
 
 
 def parse_duration(length_sec):

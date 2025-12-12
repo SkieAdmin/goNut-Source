@@ -1,124 +1,182 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Register - StreamHub{% endblock %}
 
+{% block extra_css %}
+<link href="{% static 'css/auth.css' %}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-5 col-lg-4">
-        <div class="card bg-dark border-0" style="background: var(--bg-card) !important; border-radius: 16px;">
-            <div class="card-body p-4">
-                <div class="text-center mb-4">
-                    <i class="bi bi-play-circle-fill display-4" style="color: var(--purple-light);"></i>
-                    <h3 class="mt-3">Create Account</h3>
-                    <p class="text-secondary">Join StreamHub today</p>
+<!-- Hidden Main Container Overlay -->
+<style>
+    /* Override base container styles for this page only */
+    nav.navbar,
+    footer {
+        display: none !important;
+    }
+
+    main.container {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    body {
+        overflow-x: hidden;
+    }
+</style>
+
+<div class="auth-container">
+    <!-- Left Side: Branding/Art -->
+    <div class="auth-branding">
+        <div class="brand-floating-icons">
+            <i class="bi bi-play-circle-fill floating-icon" style="font-size: 5rem; top: 15%; left: 15%;"></i>
+            <i class="bi bi-heart-fill floating-icon"
+                style="font-size: 3rem; top: 50%; left: 80%; animation-delay: 2s;"></i>
+            <i class="bi bi-stars floating-icon" style="font-size: 4rem; top: 75%; left: 25%; animation-delay: 3s;"></i>
+        </div>
+        <div class="auth-branding-content">
+            <h1 class="display-3 fw-bold mb-3">Join the <br><span style="color: #d8b4fe">Experience</span></h1>
+            <p class="h4 text-light opacity-75 mb-5">Create your free account and unlock a world of pleasure.</p>
+            <div class="d-flex flex-column gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-white bg-opacity-10 p-2 rounded-circle">
+                        <i class="bi bi-collection-play-fill fs-4 text-warning"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 text-white">Unlimited Access</h5>
+                        <small class="text-white opacity-50">Watch thousands of premium videos</small>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-white bg-opacity-10 p-2 rounded-circle">
+                        <i class="bi bi-heart-fill fs-4 text-danger"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 text-white">Personalized For You</h5>
+                        <small class="text-white opacity-50">Tailored recommendations based on your taste</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side: Form -->
+    <div class="auth-form-container">
+        <!-- <a href="{% url 'videos:home' %}" class="btn-back-home">
+            <i class="bi bi-arrow-left"></i> Back to Home
+        </a> -->
+
+        <div class="auth-card">
+            <div class="auth-header">
+                <h2 class="auth-logo">Create Account</h2>
+                <p class="text-secondary">Join the community today</p>
+            </div>
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="form-floating-custom">
+                    <input type="text" name="username" id="username" placeholder=" "
+                        value="{{ form.username.value|default:'' }}" required>
+                    <label for="username">Choose Username</label>
+                    <i class="bi bi-person form-icon"></i>
+                    {% if form.username.errors %}
+                    <small class="text-danger d-block mt-1">{{ form.username.errors.0 }}</small>
+                    {% endif %}
                 </div>
 
-                <form method="POST">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label class="form-label">Username</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-transparent border-end-0" style="border-color: rgba(147, 51, 234, 0.3);">
-                                <i class="bi bi-person" style="color: var(--purple-light);"></i>
-                            </span>
-                            <input type="text" name="username" class="form-control border-start-0" placeholder="Choose a username" value="{{ form.username.value|default:'' }}" required>
-                        </div>
-                        {% if form.username.errors %}
-                        <small class="text-danger">{{ form.username.errors.0 }}</small>
-                        {% endif %}
-                    </div>
+                <div class="form-floating-custom">
+                    <input type="password" name="password1" id="password1" placeholder=" " required>
+                    <label for="password1">Create Password</label>
+                    <i class="bi bi-lock form-icon"></i>
+                    {% if form.password1.errors %}
+                    <small class="text-danger d-block mt-1">{{ form.password1.errors.0 }}</small>
+                    {% endif %}
+                </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Password</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-transparent border-end-0" style="border-color: rgba(147, 51, 234, 0.3);">
-                                <i class="bi bi-lock" style="color: var(--purple-light);"></i>
-                            </span>
-                            <input type="password" name="password1" class="form-control border-start-0" placeholder="Create a password" required>
-                        </div>
-                        {% if form.password1.errors %}
-                        <small class="text-danger">{{ form.password1.errors.0 }}</small>
-                        {% endif %}
-                    </div>
+                <div class="form-floating-custom">
+                    <input type="password" name="password2" id="password2" placeholder=" " required>
+                    <label for="password2">Confirm Password</label>
+                    <i class="bi bi-lock-fill form-icon"></i>
+                    {% if form.password2.errors %}
+                    <small class="text-danger d-block mt-1">{{ form.password2.errors.0 }}</small>
+                    {% endif %}
+                </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Confirm Password</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-transparent border-end-0" style="border-color: rgba(147, 51, 234, 0.3);">
-                                <i class="bi bi-lock-fill" style="color: var(--purple-light);"></i>
-                            </span>
-                            <input type="password" name="password2" class="form-control border-start-0" placeholder="Confirm your password" required>
+                <!-- Gender Selection -->
+                <div class="mb-4">
+                    <label class="text-secondary small mb-2 d-block">I am a...</label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <input type="radio" class="btn-check" name="gender" id="genderMale" value="male" checked>
+                            <label
+                                class="btn btn-outline-secondary w-100 py-2 d-flex align-items-center justify-content-center gap-2"
+                                for="genderMale">
+                                <i class="bi bi-gender-male text-primary"></i> Male
+                            </label>
                         </div>
-                        {% if form.password2.errors %}
-                        <small class="text-danger">{{ form.password2.errors.0 }}</small>
-                        {% endif %}
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Gender</label>
-                        <div class="d-flex gap-4">
-                            <div class="form-check">
-                                <input type="radio" class="form-check-input" name="gender" id="genderMale" value="male" checked style="border-color: var(--purple-light);">
-                                <label class="form-check-label" for="genderMale">
-                                    <i class="bi bi-gender-male me-1" style="color: #3b82f6;"></i>Male
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input type="radio" class="form-check-input" name="gender" id="genderFemale" value="female" style="border-color: var(--purple-light);">
-                                <label class="form-check-label" for="genderFemale">
-                                    <i class="bi bi-gender-female me-1" style="color: #ec4899;"></i>Female
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label">Content Preference</label>
-                        <div class="row g-2">
-                            <div class="col-4">
-                                <input type="radio" class="btn-check" name="preference" id="prefStraight" value="straight" checked>
-                                <label class="btn btn-outline-secondary w-100 py-2" for="prefStraight" style="border-color: rgba(147, 51, 234, 0.3);">
-                                    <i class="bi bi-heart d-block mb-1" style="color: var(--purple-light);"></i>
-                                    <small>Straight</small>
-                                </label>
-                            </div>
-                            <div class="col-4">
-                                <input type="radio" class="btn-check" name="preference" id="prefTrans" value="trans">
-                                <label class="btn btn-outline-secondary w-100 py-2" for="prefTrans" style="border-color: rgba(147, 51, 234, 0.3);">
-                                    <i class="bi bi-gender-trans d-block mb-1" style="color: #f472b6;"></i>
-                                    <small>Trans</small>
-                                </label>
-                            </div>
-                            <div class="col-4">
-                                <input type="radio" class="btn-check" name="preference" id="prefGay" value="gay">
-                                <label class="btn btn-outline-secondary w-100 py-2" for="prefGay" style="border-color: rgba(147, 51, 234, 0.3);">
-                                    <i class="bi bi-rainbow d-block mb-1" style="color: #22d3ee;"></i>
-                                    <small>Gay</small>
-                                </label>
-                            </div>
-                        </div>
-                        <small class="text-secondary mt-2 d-block">This affects default video recommendations</small>
-                    </div>
-
-                    <div class="mb-4">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="ageCheck" required style="background-color: transparent; border-color: var(--purple-light);">
-                            <label class="form-check-label text-secondary" for="ageCheck">
-                                I confirm that I am 18 years or older
+                        <div class="col-6">
+                            <input type="radio" class="btn-check" name="gender" id="genderFemale" value="female">
+                            <label
+                                class="btn btn-outline-secondary w-100 py-2 d-flex align-items-center justify-content-center gap-2"
+                                for="genderFemale">
+                                <i class="bi bi-gender-female text-danger"></i> Female
                             </label>
                         </div>
                     </div>
+                </div>
 
-                    <button type="submit" class="btn btn-purple w-100 py-2 mb-3">
-                        <i class="bi bi-person-plus me-2"></i>Create Account
-                    </button>
-
-                    <div class="text-center">
-                        <span class="text-secondary">Already have an account?</span>
-                        <a href="{% url 'accounts:login' %}" style="color: var(--purple-light);">Sign in</a>
+                <!-- Content Preference -->
+                <div class="mb-4">
+                    <label class="text-secondary small mb-2 d-block">I am interested in...</label>
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <input type="radio" class="btn-check" name="preference" id="prefStraight" value="straight"
+                                checked>
+                            <label class="btn btn-outline-secondary w-100 py-2" for="prefStraight"
+                                style="font-size: 0.85rem;">
+                                <i class="bi bi-heart d-block mb-1 text-danger"></i> Straight
+                            </label>
+                        </div>
+                        <div class="col-4">
+                            <input type="radio" class="btn-check" name="preference" id="prefTrans" value="trans">
+                            <label class="btn btn-outline-secondary w-100 py-2" for="prefTrans"
+                                style="font-size: 0.85rem;">
+                                <i class="bi bi-gender-trans d-block mb-1 text-info"></i> Trans
+                            </label>
+                        </div>
+                        <div class="col-4">
+                            <input type="radio" class="btn-check" name="preference" id="prefGay" value="gay">
+                            <label class="btn btn-outline-secondary w-100 py-2" for="prefGay"
+                                style="font-size: 0.85rem;">
+                                <i class="bi bi-rainbow d-block mb-1 text-success"></i> Gay
+                            </label>
+                        </div>
                     </div>
-                </form>
-            </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="form-check custom-checkbox">
+                        <input type="checkbox" class="form-check-input" id="ageCheck" required>
+                        <label class="form-check-label text-secondary" for="ageCheck" style="font-size: 0.9rem;">
+                            I confirm that I am 18 years or older and accept the <a href="#"
+                                class="text-decoration-none" style="color: var(--primary);">Terms of Service</a>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-purple btn-glow w-100 py-3 mb-4 rounded-pill">
+                    Create Free Account
+                </button>
+
+                <div class="text-center">
+                    <span class="text-secondary">Already have an account?</span>
+                    <a href="{% url 'accounts:login' %}" class="fw-bold text-decoration-none ms-1"
+                        style="color: var(--primary-light);">Sign in</a>
+                </div>
+            </form>
         </div>
     </div>
 </div>

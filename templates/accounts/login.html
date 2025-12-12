@@ -1,65 +1,126 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Login - StreamHub{% endblock %}
 
+{% block extra_css %}
+<link href="{% static 'css/auth.css' %}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-5 col-lg-4">
-        <div class="card bg-dark border-0" style="background: var(--bg-card) !important; border-radius: 16px;">
-            <div class="card-body p-4">
-                <div class="text-center mb-4">
-                    <i class="bi bi-play-circle-fill display-4" style="color: var(--purple-light);"></i>
-                    <h3 class="mt-3">Welcome Back</h3>
-                    <p class="text-secondary">Sign in to your account</p>
+<!-- Hidden Main Container Overlay -->
+<style>
+    /* Override base container styles for this page only */
+    nav.navbar,
+    footer {
+        display: none !important;
+    }
+
+    main.container {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    body {
+        overflow-x: hidden;
+    }
+</style>
+
+<div class="auth-container">
+    <!-- Left Side: Branding/Art -->
+    <div class="auth-branding">
+        <div class="brand-floating-icons">
+            <i class="bi bi-play-circle-fill floating-icon" style="font-size: 5rem; top: 20%; left: 20%;"></i>
+            <i class="bi bi-heart-fill floating-icon"
+                style="font-size: 3rem; top: 60%; left: 70%; animation-delay: 2s;"></i>
+            <i class="bi bi-fire floating-icon" style="font-size: 4rem; top: 80%; left: 30%; animation-delay: 4s;"></i>
+        </div>
+        <div class="auth-branding-content">
+            <h1 class="display-3 fw-bold mb-3">Welcome to <br><span style="color: #d8b4fe">goNuts</span></h1>
+            <p class="h4 text-light opacity-75 mb-5">Your ultimate destination for premium adult entertainment.</p>
+            <div class="d-flex gap-4">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-hd-fill fs-3 text-warning"></i>
+                    <span>4K Ultra HD</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-shield-check fs-3 text-success"></i>
+                    <span>Secure & Private</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side: Form -->
+    <div class="auth-form-container">
+        <!-- <a href="{% url 'videos:home' %}" class="btn-back-home">
+            <i class="bi bi-arrow-left"></i> Back to Home
+        </a> -->
+
+        <div class="auth-card">
+            <div class="auth-header">
+                <i class="bi bi-play-circle-fill display-4" style="color: var(--primary);"></i>
+                <h2 class="auth-logo d-block">goNuts</h2>
+                <p class="text-secondary">Sign in to continue to your account</p>
+            </div>
+
+            <form method="POST">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                <div class="alert alert-danger py-2 mb-4">
+                    <i class="bi bi-exclamation-circle-fill me-2"></i>
+                    Invalid username or password.
+                </div>
+                {% endif %}
+
+                <div class="form-floating-custom">
+                    <input type="text" name="username" id="username" placeholder=" " required>
+                    <label for="username">Username</label>
+                    <i class="bi bi-person form-icon"></i>
                 </div>
 
-                <form method="POST">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label class="form-label">Username</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-transparent border-end-0" style="border-color: rgba(147, 51, 234, 0.3);">
-                                <i class="bi bi-person" style="color: var(--purple-light);"></i>
-                            </span>
-                            <input type="text" name="username" class="form-control border-start-0" placeholder="Enter your username" required>
-                        </div>
-                    </div>
+                <div class="form-floating-custom">
+                    <input type="password" name="password" id="password" placeholder=" " required>
+                    <label for="password">Password</label>
+                    <i class="bi bi-lock form-icon"></i>
+                </div>
 
-                    <div class="mb-4">
-                        <label class="form-label">Password</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-transparent border-end-0" style="border-color: rgba(147, 51, 234, 0.3);">
-                                <i class="bi bi-lock" style="color: var(--purple-light);"></i>
-                            </span>
-                            <input type="password" name="password" class="form-control border-start-0" placeholder="Enter your password" required>
-                        </div>
-                    </div>
-
-                    <!-- Remember Me -->
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" name="remember_me" id="rememberMe" class="form-check-input"
-                               style="background-color: var(--bg-secondary); border-color: rgba(147, 51, 234, 0.5);">
-                        <label class="form-check-label text-secondary" for="rememberMe">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="form-check custom-checkbox">
+                        <input type="checkbox" name="remember_me" id="rememberMe" class="form-check-input">
+                        <label class="form-check-label text-secondary small" for="rememberMe">
                             Remember me
                         </label>
                     </div>
+                </div>
 
-                    {% if form.errors %}
-                    <div class="alert alert-danger py-2 mb-3">
-                        <small>Invalid username or password. Please try again.</small>
-                    </div>
-                    {% endif %}
+                <button type="submit" class="btn btn-purple btn-glow w-100 py-3 mb-4 rounded-pill">
+                    Sign In
+                </button>
 
-                    <button type="submit" class="btn btn-purple w-100 py-2 mb-3">
-                        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                <div class="separator">
+                    <span>or continue with</span>
+                </div>
+
+                <div class="d-flex gap-2 justify-content-center mb-4">
+                    <button type="button" class="btn btn-outline-secondary rounded-circle"
+                        style="width: 45px; height: 45px;">
+                        <i class="bi bi-google"></i>
                     </button>
+                    <button type="button" class="btn btn-outline-secondary rounded-circle"
+                        style="width: 45px; height: 45px;">
+                        <i class="bi bi-twitter-x"></i>
+                    </button>
+                </div>
 
-                    <div class="text-center">
-                        <span class="text-secondary">Don't have an account?</span>
-                        <a href="{% url 'accounts:register' %}" style="color: var(--purple-light);">Sign up</a>
-                    </div>
-                </form>
-            </div>
+                <div class="text-center">
+                    <span class="text-secondary">Don't have an account?</span>
+                    <a href="{% url 'accounts:register' %}" class="fw-bold text-decoration-none ms-1"
+                        style="color: var(--primary-light);">Create Account</a>
+                </div>
+            </form>
         </div>
     </div>
 </div>
