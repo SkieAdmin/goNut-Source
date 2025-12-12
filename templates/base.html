@@ -76,7 +76,7 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    <link href="{% static 'css/style.css' %}?v=20241212" rel="stylesheet">
     {% block extra_css %}{% endblock %}
 
     {% block extra_head %}{% endblock %}
@@ -255,18 +255,24 @@
     <script>
         function toggleMobileSearch() {
             const overlay = document.getElementById('mobileSearchOverlay');
+            const bottomNav = document.querySelector('.bottom-nav');
+            const navbar = document.querySelector('.navbar');
             const isActive = overlay.classList.toggle('active');
 
             if (isActive) {
+                // Directly hide elements with inline styles (more reliable)
+                if (bottomNav) bottomNav.style.display = 'none';
+                if (navbar) navbar.style.display = 'none';
+                document.body.style.overflow = 'hidden';
                 // Focus the search input when opening
                 const input = overlay.querySelector('input[name="q"]');
                 if (input) {
                     setTimeout(() => input.focus(), 100);
                 }
-                // Prevent body scroll
-                document.body.style.overflow = 'hidden';
             } else {
-                // Restore body scroll
+                // Restore elements
+                if (bottomNav) bottomNav.style.display = '';
+                if (navbar) navbar.style.display = '';
                 document.body.style.overflow = '';
             }
         }

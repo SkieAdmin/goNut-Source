@@ -263,6 +263,15 @@ body {
     visibility: visible;
 }
 
+/* Hide everything when search overlay is active */
+body.search-overlay-active .bottom-nav {
+    display: none !important;
+}
+
+body.search-overlay-active .navbar {
+    display: none !important;
+}
+
 .mobile-search-overlay .search-box {
     background: var(--bg-input);
     border: 2px solid var(--primary);
