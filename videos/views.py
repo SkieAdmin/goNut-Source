@@ -13,7 +13,10 @@ from .models import (
     APIVideoView, APIVideoLike, APIVideoFavorite, APIVideoComment, VideoList
 )
 from .forms import VideoUploadForm, VideoEditForm
-from .services import EpornerAPI, HanimeAPI, RedTubeAPI, XVideosAPI, PornstarService, parse_duration, get_embed_url, get_quality_label
+from .services import EpornerAPI, HanimeAPI, RedTubeAPI, XVideosAPI, RedGifsAPI, PornstarService, parse_duration, get_embed_url, get_quality_label
+
+# Maximum length for a single user comment (defense against abuse / huge payloads).
+MAX_COMMENT_LENGTH = 2000
 
 
 def get_user_gay_param(request):
@@ -65,6 +68,10 @@ def home_view(request):
     # Get videos from xVideos
     xvideos_trending = XVideosAPI.get_trending(page=0)
     xvideos_latest = XVideosAPI.get_latest(page=0)
+
+    # Get clips from RedGifs (already normalized to the card shape)
+    redgifs_trending = RedGifsAPI.get_trending(page=1, count=12)
+    redgifs_videos = redgifs_trending.get('videos', [])[:12] if redgifs_trending else []
 
     # Process Eporner videos - add source tag and watch URL
     def process_eporner(videos):
@@ -155,6 +162,7 @@ def home_view(request):
         'newest_videos': mixed_newest[:12],
         'featured_videos': featured_videos,
         'xvideos_videos': xvideos_videos,  # Dedicated xVideos section
+        'redgifs_videos': redgifs_videos,  # Dedicated RedGifs section
         'popular_pornstars': popular_pornstars,
     }
     return render(request, 'videos/home.html', context)
@@ -728,6 +736,130 @@ def xvideos_watch_view(request, video_id):
     return render(request, 'videos/xvideos/watch.html', context)
 
 
+# ============ REDGIFS SECTION ============
+
+def redgifs_browse_view(request):
+    """Browse RedGifs clips (trending / latest / top)."""
+    page = int(request.GET.get('page', 1))
+    order = request.GET.get('order', 'trending')
+    if order not in ('trending', 'latest', 'top', 'top28'):
+        order = 'trending'
+
+    data = RedGifsAPI.search(page=page, order=order, count=24)
+    videos = data.get('videos', []) if data else []
+    total_count = int(data.get('total_count', 0)) if data else 0
+    total_pages = int(data.get('pages', 0)) if data else 0
+
+    order_titles = {
+        'trending': 'Trending Clips',
+        'latest': 'Newest Clips',
+        'top': 'Top Clips',
+        'top28': 'Top This Month',
+    }
+
+    context = {
+        'videos': videos,
+        'total_count': total_count,
+        'current_page': page,
+        'has_next': page < total_pages,
+        'has_prev': page > 1,
+        'page_title': order_titles.get(order, 'RedGifs'),
+        'page_icon': 'bi-camera-reels',
+    }
+    return render(request, 'videos/video_list_api.html', context)
+
+
+def redgifs_watch_view(request, video_id):
+    """Watch a RedGifs clip."""
+    video_data = RedGifsAPI.get_video_by_id(gif_id=video_id)
+
+    embed_url = RedGifsAPI.get_embed_url(video_id)
+
+    # Fall back to query params passed from a card if the lookup failed.
+    if not video_data:
+        video_data = {
+            'id': video_id,
+            'title': request.GET.get('title', f'RedGifs Clip {video_id}'),
+            'thumb': request.GET.get('thumb', ''),
+            'poster': request.GET.get('thumb', ''),
+            'duration': request.GET.get('duration', ''),
+            'views': request.GET.get('views', '0'),
+            'likes': request.GET.get('likes', '0'),
+            'tags': [],
+            'source': 'redgifs',
+        }
+
+    # Log view for authenticated users (history tracking).
+    if request.user.is_authenticated:
+        APIVideoView.objects.create(
+            user=request.user,
+            video_id=video_id,
+            source='redgifs',
+            title=video_data.get('title', ''),
+            thumbnail=video_data.get('poster', '') or video_data.get('thumb', ''),
+            duration=video_data.get('duration', ''),
+        )
+
+    # User interaction data.
+    user_like = None
+    is_favorited = False
+    if request.user.is_authenticated:
+        like_obj = APIVideoLike.objects.filter(user=request.user, video_id=video_id, source='redgifs').first()
+        user_like = like_obj.is_like if like_obj else None
+        is_favorited = APIVideoFavorite.objects.filter(user=request.user, video_id=video_id, source='redgifs').exists()
+
+    comments = APIVideoComment.objects.filter(video_id=video_id, source='redgifs', is_active=True).select_related('user')[:50]
+    likes_count = APIVideoLike.objects.filter(video_id=video_id, source='redgifs', is_like=True).count()
+    dislikes_count = APIVideoLike.objects.filter(video_id=video_id, source='redgifs', is_like=False).count()
+
+    # Related clips by first tag (or trending fallback).
+    tags = video_data.get('tags', []) or []
+    if tags:
+        related_data = RedGifsAPI.get_by_tag(tags[0])
+    else:
+        related_data = RedGifsAPI.get_trending()
+
+    context = {
+        'video': video_data,
+        'embed_url': embed_url,
+        'related_videos': related_data.get('videos', [])[:12] if related_data else [],
+        'user_like': user_like,
+        'is_favorited': is_favorited,
+        'comments': comments,
+        'likes_count': likes_count,
+        'dislikes_count': dislikes_count,
+    }
+    return render(request, 'videos/redgifs/watch.html', context)
+
+
+def redgifs_search_view(request):
+    """Search RedGifs clips."""
+    query = request.GET.get('q', '')
+    page = int(request.GET.get('page', 1))
+
+    if query:
+        data = RedGifsAPI.search(query=query, page=page, order='trending', count=24)
+        videos = data.get('videos', []) if data else []
+        total_count = int(data.get('total_count', 0)) if data else 0
+        total_pages = int(data.get('pages', 0)) if data else 0
+    else:
+        videos = []
+        total_count = 0
+        total_pages = 0
+
+    context = {
+        'videos': videos,
+        'query': query,
+        'total_count': total_count,
+        'current_page': page,
+        'has_next': page < total_pages,
+        'has_prev': page > 1,
+        'page_title': f'RedGifs: {query}' if query else 'Search RedGifs',
+        'page_icon': 'bi-camera-reels',
+    }
+    return render(request, 'videos/video_list_api.html', context)
+
+
 def redtube_search_view(request):
     """Search RedTube videos"""
     query = request.GET.get('q', '')
@@ -882,6 +1014,11 @@ def add_comment(request, slug):
     if request.method == 'POST':
         video = get_object_or_404(Video, slug=slug)
         content = request.POST.get('content', '').strip()
+        if len(content) > MAX_COMMENT_LENGTH:
+            return JsonResponse(
+                {'error': f'Comment is too long (max {MAX_COMMENT_LENGTH} characters).'},
+                status=400,
+            )
         if content:
             comment = Comment.objects.create(
                 video=video,
@@ -1049,9 +1186,17 @@ def api_video_comment(request, video_id):
 
     content = data.get('content', '').strip()
     source = data.get('source', 'eporner')
+    if source not in ('eporner', 'redtube', 'xvideos', 'hentai'):
+        source = 'eporner'
 
     if not content:
         return JsonResponse({'error': 'Comment content is required'}, status=400)
+
+    if len(content) > MAX_COMMENT_LENGTH:
+        return JsonResponse(
+            {'error': f'Comment is too long (max {MAX_COMMENT_LENGTH} characters).'},
+            status=400,
+        )
 
     comment = APIVideoComment.objects.create(
         user=request.user,

@@ -147,13 +147,30 @@
 </section>
 {% endif %}
 
+<!-- RedGifs Section -->
+{% if redgifs_videos %}
+<section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="section-title mb-0"><i class="bi bi-camera-reels me-2" style="color: #ff4d6d;"></i>RedGifs Clips</h2>
+        <a href="{% url 'videos:redgifs_browse' %}" class="btn btn-outline-purple btn-sm">View All</a>
+    </div>
+    <div class="row g-3">
+        {% for video in redgifs_videos %}
+        <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+            {% include 'videos/includes/video_card_api.html' %}
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
 <!-- Quick Access - Other Sections -->
 <section class="mb-5">
     <h2 class="section-title mb-3"><i class="bi bi-collection-play me-2"></i>Explore More</h2>
     <div class="row g-3">
-        <div class="col-6 col-md-4">
+        <div class="col-6 col-md-3">
             <a href="{% url 'videos:hentai_home' %}" class="text-decoration-none">
-                <div class="category-card py-4"
+                <div class="category-card py-4 h-100"
                     style="border: 2px solid rgba(236, 72, 153, 0.3); background: linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, var(--bg-card) 100%);">
                     <i class="bi bi-heart-fill fs-2 mb-2" style="color: #ec4899;"></i>
                     <h5 class="mb-1" style="color: #ec4899;">Hentai</h5>
@@ -161,9 +178,9 @@
                 </div>
             </a>
         </div>
-        <div class="col-6 col-md-4">
+        <div class="col-6 col-md-3">
             <a href="{% url 'videos:redtube_home' %}" class="text-decoration-none">
-                <div class="category-card py-4"
+                <div class="category-card py-4 h-100"
                     style="border: 2px solid rgba(220, 38, 38, 0.3); background: linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, var(--bg-card) 100%);">
                     <i class="bi bi-play-btn-fill fs-2 mb-2" style="color: #dc2626;"></i>
                     <h5 class="mb-1" style="color: #dc2626;">RedTube</h5>
@@ -171,9 +188,19 @@
                 </div>
             </a>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-6 col-md-3">
+            <a href="{% url 'videos:redgifs_browse' %}" class="text-decoration-none">
+                <div class="category-card py-4 h-100"
+                    style="border: 2px solid rgba(255, 77, 109, 0.3); background: linear-gradient(135deg, rgba(255, 77, 109, 0.1) 0%, var(--bg-card) 100%);">
+                    <i class="bi bi-camera-reels fs-2 mb-2" style="color: #ff4d6d;"></i>
+                    <h5 class="mb-1" style="color: #ff4d6d;">RedGifs</h5>
+                    <small class="text-secondary">Short Adult Clips</small>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
             <a href="{% url 'videos:categories' %}" class="text-decoration-none">
-                <div class="category-card py-4" style="border: 2px solid rgba(147, 51, 234, 0.3);">
+                <div class="category-card py-4 h-100" style="border: 2px solid rgba(147, 51, 234, 0.3);">
                     <i class="bi bi-grid-3x3-gap fs-2 mb-2" style="color: var(--purple-light);"></i>
                     <h5 class="mb-1" style="color: var(--purple-light);">Categories</h5>
                     <small class="text-secondary">Browse All Categories</small>

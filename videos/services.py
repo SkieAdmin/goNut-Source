@@ -1,4 +1,5 @@
 import re
+import time
 import requests
 from urllib.parse import urlencode, quote_plus
 from .cache import cached
@@ -829,6 +830,193 @@ class XVideosAPI:
     def get_embed_url(cls, video_id):
         """Get embed URL for a video"""
         return f"{cls.BASE_URL}/embedframe/{video_id}"
+
+
+class RedGifsAPI:
+    """
+    RedGifs public API (v2) — free, no signup/API key required.
+
+    RedGifs is one of the largest hosts of short adult video clips and exposes
+    a stable JSON API. Access requires a short-lived "temporary" bearer token,
+    which we fetch automatically and cache. Every method fails soft: on any
+    error it returns empty results so a RedGifs outage never breaks a page.
+
+    Docs (community): https://github.com/Redgifs/api
+    """
+    API_BASE = "https://api.redgifs.com/v2"
+    TEMP_TOKEN_URL = "https://api.redgifs.com/v2/auth/temporary"
+    EMBED_URL = "https://www.redgifs.com/ifr"
+
+    # Cached temporary token (shared across the process).
+    _token = None
+    _token_fetched_at = 0
+    _token_ttl = 3600  # refresh hourly
+
+    TAGS = [
+        'amateur', 'anal', 'asian', 'babe', 'bbw', 'big-tits', 'blonde',
+        'blowjob', 'brunette', 'cosplay', 'creampie', 'cumshot', 'ebony',
+        'fetish', 'hardcore', 'hentai', 'latina', 'lesbian', 'milf', 'pov',
+        'public', 'redhead', 'teen', 'threesome',
+    ]
+
+    @classmethod
+    def _headers(cls):
+        return {
+            'User-Agent': (
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            ),
+            'Accept': 'application/json',
+            'Referer': 'https://www.redgifs.com/',
+        }
+
+    @classmethod
+    def _get_token(cls):
+        """Fetch (and cache) a temporary bearer token."""
+        now = time.time()
+        if cls._token and (now - cls._token_fetched_at) < cls._token_ttl:
+            return cls._token
+        try:
+            resp = requests.get(cls.TEMP_TOKEN_URL, headers=cls._headers(), timeout=10)
+            resp.raise_for_status()
+            cls._token = resp.json().get('token')
+            cls._token_fetched_at = now
+        except requests.RequestException as e:
+            print(f"[RedGifs] token error: {e}")
+            cls._token = None
+        return cls._token
+
+    @classmethod
+    def _auth_headers(cls):
+        headers = cls._headers()
+        token = cls._get_token()
+        if token:
+            headers['Authorization'] = f'Bearer {token}'
+        return headers
+
+    @classmethod
+    def _format_duration(cls, seconds):
+        try:
+            seconds = int(float(seconds or 0))
+        except (ValueError, TypeError):
+            seconds = 0
+        return f"{seconds // 60}:{seconds % 60:02d}"
+
+    @classmethod
+    def _normalize(cls, gif):
+        """Convert a RedGifs gif object into our standard card shape."""
+        if not isinstance(gif, dict):
+            return None
+        gif_id = gif.get('id')
+        if not gif_id:
+            return None
+
+        urls = gif.get('urls', {}) or {}
+        poster = urls.get('poster') or urls.get('thumbnail') or ''
+        views = gif.get('views', 0) or 0
+        likes = gif.get('likes', 0) or 0
+        # A "like rate" gives the card's thumbs-up%% something meaningful.
+        rate = round((likes / views) * 100) if views else 0
+
+        tags = gif.get('tags', []) or []
+        title = gif.get('description') or (tags[0].title() if tags else '') or f'RedGifs {gif_id}'
+        title = str(title).strip()[:120] or f'RedGifs {gif_id}'
+        duration = cls._format_duration(gif.get('duration'))
+
+        return {
+            'id': gif_id,
+            'title': title,
+            'default_thumb': {'src': poster},
+            'thumb': poster,
+            'poster': poster,
+            'hd': urls.get('hd', ''),
+            'sd': urls.get('sd', ''),
+            'views': views,
+            'likes': likes,
+            'rate': rate,
+            'length_min': duration,
+            'duration': duration,
+            'tags': tags,
+            'source': 'redgifs',
+            'watch_url': f"/redgifs/watch/{gif_id}/",
+        }
+
+    @classmethod
+    @cached(prefix='redgifs:search', ttl=1800)  # 30 min cache
+    def search(cls, query="", page=1, order="trending", count=24):
+        """
+        Search RedGifs.
+
+        Args:
+            query: search term (empty = browse the chosen order)
+            page: 1-based page number
+            order: trending, latest, top, top28 (week)
+            count: results per page (max 100)
+        """
+        params = {'order': order, 'count': count, 'page': page}
+        if query:
+            params['search_text'] = query
+
+        try:
+            resp = requests.get(
+                f"{cls.API_BASE}/gifs/search",
+                params=params, headers=cls._auth_headers(), timeout=15,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            gifs = data.get('gifs', []) or []
+            videos = [v for v in (cls._normalize(g) for g in gifs) if v]
+            print(f"[RedGifs] Found {len(videos)} clips")
+            return {
+                'videos': videos,
+                'count': data.get('total', len(videos)),
+                'total_count': data.get('total', len(videos)),
+                'page': data.get('page', page),
+                'pages': data.get('pages', 1),
+            }
+        except requests.RequestException as e:
+            print(f"[RedGifs] search error: {e}")
+            return {'videos': [], 'count': 0, 'total_count': 0, 'page': page, 'pages': 0}
+        except Exception as e:
+            print(f"[RedGifs] search exception: {e}")
+            return {'videos': [], 'count': 0, 'total_count': 0, 'page': page, 'pages': 0}
+
+    @classmethod
+    @cached(prefix='redgifs:by_id', ttl=3600)  # 1 hour cache
+    def get_video_by_id(cls, gif_id):
+        """Get a single clip by id."""
+        try:
+            resp = requests.get(
+                f"{cls.API_BASE}/gifs/{gif_id}",
+                headers=cls._auth_headers(), timeout=15,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            gif = data.get('gif') or {}
+            return cls._normalize(gif)
+        except requests.RequestException as e:
+            print(f"[RedGifs] get_video_by_id error: {e}")
+            return None
+
+    @classmethod
+    def get_trending(cls, page=1, count=24):
+        """Trending clips."""
+        return cls.search(page=page, order='trending', count=count)
+
+    @classmethod
+    def get_latest(cls, page=1, count=24):
+        """Newest clips."""
+        return cls.search(page=page, order='latest', count=count)
+
+    @classmethod
+    def get_by_tag(cls, tag, page=1, count=24):
+        """Clips for a tag/search term."""
+        return cls.search(query=tag, page=page, order='trending', count=count)
+
+    @classmethod
+    def get_embed_url(cls, gif_id):
+        """Embeddable player URL for a clip."""
+        return f"{cls.EMBED_URL}/{gif_id}"
 
 
 def parse_duration(length_sec):

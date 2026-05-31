@@ -628,14 +628,14 @@ async function addComment() {
                 <div class="comment-item">
                     <div class="d-flex gap-3">
                         <div class="comment-avatar flex-shrink-0">
-                            ${data.comment.username[0].toUpperCase()}
+                            ${escapeHtml(data.comment.username[0].toUpperCase())}
                         </div>
                         <div>
                             <div class="mb-1">
-                                <strong class="text-white">${data.comment.username}</strong>
-                                <small class="text-secondary ms-2">${data.comment.created_at}</small>
+                                <strong class="text-white">${escapeHtml(data.comment.username)}</strong>
+                                <small class="text-secondary ms-2">${escapeHtml(data.comment.created_at)}</small>
                             </div>
-                            <p class="mb-0 text-secondary">${data.comment.content}</p>
+                            <p class="mb-0 text-secondary">${escapeHtml(data.comment.content)}</p>
                         </div>
                     </div>
                 </div>

@@ -1,0 +1,467 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ video.title }} - RedGifs - {{ site_name }}{% endblock %}
+{% block robots %}noindex, follow{% endblock %}
+
+{% block extra_css %}
+<style>
+    .video-player-container {
+        background: #000;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    .video-player {
+        width: 100%;
+        aspect-ratio: 16/9;
+        background: #000;
+    }
+
+    .video-player iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+
+    .video-stats {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-secondary);
+    }
+
+    .stat-item i {
+        color: #ff4d6d;
+    }
+
+    .video-description {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .tag-link {
+        display: inline-block;
+        background: rgba(255, 77, 109, 0.18);
+        color: #ff4d6d;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        margin: 0.2rem;
+        transition: all 0.3s ease;
+    }
+
+    .tag-link:hover {
+        background: #ff4d6d;
+        color: white;
+    }
+
+    .related-video {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border-radius: 8px;
+        transition: background 0.3s ease;
+    }
+
+    .related-video:hover {
+        background: var(--bg-hover);
+    }
+
+    .related-thumbnail {
+        width: 120px;
+        flex-shrink: 0;
+        aspect-ratio: 16/9;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .related-thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* Action buttons */
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 77, 109, 0.3);
+        background: var(--bg-card);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .action-btn:hover {
+        background: rgba(255, 77, 109, 0.1);
+        border-color: #ff4d6d;
+        color: #ff4d6d;
+    }
+
+    .action-btn.liked {
+        background: #22c55e;
+        border-color: #22c55e;
+        color: white;
+    }
+
+    .action-btn.disliked {
+        background: #ef4444;
+        border-color: #ef4444;
+        color: white;
+    }
+
+    .action-btn.favorited {
+        background: #ec4899;
+        border-color: #ec4899;
+        color: white;
+    }
+
+    /* Comments section */
+    .comments-section {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .comment-form textarea {
+        background: var(--bg-secondary);
+        border: 1px solid rgba(255, 77, 109, 0.3);
+        color: var(--text-primary);
+        border-radius: 8px;
+        resize: none;
+    }
+
+    .comment-form textarea:focus {
+        background: var(--bg-secondary);
+        border-color: #ff4d6d;
+        color: var(--text-primary);
+        box-shadow: 0 0 0 0.2rem rgba(255, 77, 109, 0.25);
+    }
+
+    .comment-item {
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .comment-item:last-child {
+        border-bottom: none;
+    }
+
+    .comment-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ff4d6d, #c9184a);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Video Player -->
+        <div class="video-player-container">
+            <div class="video-player">
+                <iframe src="{{ embed_url }}" allowfullscreen scrolling="no"></iframe>
+            </div>
+        </div>
+
+        <!-- Video Info -->
+        <div class="mb-3">
+            <h1 class="h4 mb-3">{{ video.title }}</h1>
+
+            <div class="video-stats mb-3">
+                <div class="stat-item">
+                    <i class="bi bi-eye"></i>
+                    <span>{{ video.views|default:0 }} views</span>
+                </div>
+                <div class="stat-item">
+                    <i class="bi bi-hand-thumbs-up"></i>
+                    <span>{{ video.likes|default:0 }} likes</span>
+                </div>
+                <div class="stat-item">
+                    <i class="bi bi-clock"></i>
+                    <span>{{ video.duration }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="badge" style="background: rgba(255,77,109,0.18); color:#ff4d6d;">RedGifs</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2 flex-wrap">
+                {% if user.is_authenticated %}
+                <button class="action-btn {% if user_like == True %}liked{% endif %}" id="likeBtn" onclick="likeVideo()">
+                    <i class="bi bi-hand-thumbs-up{% if user_like == True %}-fill{% endif %}"></i>
+                    <span id="likesCount">{{ likes_count }}</span>
+                </button>
+                <button class="action-btn {% if user_like == False %}disliked{% endif %}" id="dislikeBtn" onclick="dislikeVideo()">
+                    <i class="bi bi-hand-thumbs-down{% if user_like == False %}-fill{% endif %}"></i>
+                    <span id="dislikesCount">{{ dislikes_count }}</span>
+                </button>
+                <button class="action-btn {% if is_favorited %}favorited{% endif %}" id="favoriteBtn" onclick="toggleFavorite()">
+                    <i class="bi bi-heart{% if is_favorited %}-fill{% endif %}"></i>
+                    <span>{% if is_favorited %}Saved{% else %}Save{% endif %}</span>
+                </button>
+                {% else %}
+                <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="action-btn">
+                    <i class="bi bi-hand-thumbs-up"></i>
+                    <span>{{ likes_count }}</span>
+                </a>
+                <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="action-btn">
+                    <i class="bi bi-hand-thumbs-down"></i>
+                    <span>{{ dislikes_count }}</span>
+                </a>
+                <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="action-btn">
+                    <i class="bi bi-heart"></i>
+                    <span>Save</span>
+                </a>
+                {% endif %}
+                <button class="action-btn" onclick="shareVideo()">
+                    <i class="bi bi-share"></i>
+                    <span>Share</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Tags -->
+        {% if video.tags %}
+        <div class="video-description">
+            <strong class="text-secondary me-2">Tags:</strong>
+            {% for tag in video.tags %}
+            <a href="{% url 'videos:redgifs_search' %}?q={{ tag|urlencode }}" class="tag-link">{{ tag }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Comments Section -->
+        <div class="comments-section">
+            <h5 class="mb-4"><i class="bi bi-chat-dots me-2" style="color: #ff4d6d;"></i>Comments ({{ comments|length }})</h5>
+
+            {% if user.is_authenticated %}
+            <div class="comment-form mb-4">
+                <div class="d-flex gap-3">
+                    <div class="comment-avatar flex-shrink-0">
+                        {{ user.username|first|upper }}
+                    </div>
+                    <div class="flex-grow-1">
+                        <textarea class="form-control mb-2" id="commentInput" rows="2" maxlength="2000" placeholder="Add a comment..."></textarea>
+                        <button class="btn btn-sm" style="background:#ff4d6d;color:#fff;" onclick="addComment()">
+                            <i class="bi bi-send me-1"></i>Post Comment
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-secondary mb-4">
+                <a href="{% url 'accounts:login' %}?next={{ request.path }}" style="color:#ff4d6d;">Login</a> to leave a comment
+            </div>
+            {% endif %}
+
+            <div id="commentsContainer">
+                {% for comment in comments %}
+                <div class="comment-item">
+                    <div class="d-flex gap-3">
+                        <div class="comment-avatar flex-shrink-0">
+                            {{ comment.user.username|first|upper }}
+                        </div>
+                        <div>
+                            <div class="mb-1">
+                                <strong class="text-white">{{ comment.user.username }}</strong>
+                                <small class="text-secondary ms-2">{{ comment.created_at|date:"M d, Y" }}</small>
+                            </div>
+                            <p class="mb-0 text-secondary">{{ comment.content }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-secondary text-center" id="noCommentsMsg">No comments yet. Be the first to comment!</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar - Related Clips -->
+    <div class="col-lg-4">
+        <div class="sidebar">
+            <h5 class="sidebar-title"><i class="bi bi-camera-reels me-2"></i>More Clips</h5>
+            {% for rel_video in related_videos %}
+            <a href="{{ rel_video.watch_url }}?title={{ rel_video.title|urlencode }}&thumb={{ rel_video.poster|urlencode }}&duration={{ rel_video.duration|urlencode }}&views={{ rel_video.views }}" class="related-video text-decoration-none">
+                <div class="related-thumbnail">
+                    <img src="{{ rel_video.poster }}" alt="{{ rel_video.title }}" loading="lazy">
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="text-white mb-1" style="font-size: 0.85rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ rel_video.title }}</h6>
+                    <small class="text-secondary">
+                        <i class="bi bi-eye me-1"></i>{{ rel_video.views }}
+                    </small>
+                </div>
+            </a>
+            {% empty %}
+            <p class="text-secondary text-center py-3">No more clips</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const videoId = '{{ video.id|escapejs }}';
+    const videoTitle = '{{ video.title|escapejs }}';
+    const videoThumb = '{{ video.poster|default:video.thumb|escapejs }}';
+    const videoDuration = '{{ video.duration|escapejs }}';
+    const csrfToken = '{{ csrf_token }}';
+    const SOURCE = 'redgifs';
+
+    function shareVideo() {
+        if (navigator.share) {
+            navigator.share({ title: videoTitle, url: window.location.href }).catch(() => {});
+        } else {
+            navigator.clipboard.writeText(window.location.href);
+            showToast('Link copied!', 'success');
+        }
+    }
+
+    {% if user.is_authenticated %}
+    async function likeVideo() {
+        try {
+            const response = await fetch(`/api/video/${videoId}/like/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ source: SOURCE })
+            });
+            const data = await response.json();
+            document.getElementById('likesCount').textContent = data.likes;
+            document.getElementById('dislikesCount').textContent = data.dislikes;
+            const likeBtn = document.getElementById('likeBtn');
+            const dislikeBtn = document.getElementById('dislikeBtn');
+            if (data.status === 'liked') {
+                likeBtn.classList.add('liked');
+                likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up-fill';
+                dislikeBtn.classList.remove('disliked');
+                dislikeBtn.querySelector('i').className = 'bi bi-hand-thumbs-down';
+            } else {
+                likeBtn.classList.remove('liked');
+                likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up';
+            }
+        } catch (error) { console.error('Error:', error); }
+    }
+
+    async function dislikeVideo() {
+        try {
+            const response = await fetch(`/api/video/${videoId}/dislike/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ source: SOURCE })
+            });
+            const data = await response.json();
+            document.getElementById('likesCount').textContent = data.likes;
+            document.getElementById('dislikesCount').textContent = data.dislikes;
+            const likeBtn = document.getElementById('likeBtn');
+            const dislikeBtn = document.getElementById('dislikeBtn');
+            if (data.status === 'disliked') {
+                dislikeBtn.classList.add('disliked');
+                dislikeBtn.querySelector('i').className = 'bi bi-hand-thumbs-down-fill';
+                likeBtn.classList.remove('liked');
+                likeBtn.querySelector('i').className = 'bi bi-hand-thumbs-up';
+            } else {
+                dislikeBtn.classList.remove('disliked');
+                dislikeBtn.querySelector('i').className = 'bi bi-hand-thumbs-down';
+            }
+        } catch (error) { console.error('Error:', error); }
+    }
+
+    async function toggleFavorite() {
+        try {
+            const response = await fetch(`/api/video/${videoId}/favorite/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ source: SOURCE, title: videoTitle, thumbnail: videoThumb, duration: videoDuration })
+            });
+            const data = await response.json();
+            const favoriteBtn = document.getElementById('favoriteBtn');
+            if (data.status === 'added') {
+                favoriteBtn.classList.add('favorited');
+                favoriteBtn.querySelector('i').className = 'bi bi-heart-fill';
+                favoriteBtn.querySelector('span').textContent = 'Saved';
+                showToast('Added to favorites!', 'success');
+            } else {
+                favoriteBtn.classList.remove('favorited');
+                favoriteBtn.querySelector('i').className = 'bi bi-heart';
+                favoriteBtn.querySelector('span').textContent = 'Save';
+                showToast('Removed from favorites', 'success');
+            }
+        } catch (error) { console.error('Error:', error); }
+    }
+
+    async function addComment() {
+        const content = document.getElementById('commentInput').value.trim();
+        if (!content) return;
+        try {
+            const response = await fetch(`/api/video/${videoId}/comment/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ source: SOURCE, content: content })
+            });
+            const data = await response.json();
+            if (data.status === 'success') {
+                const noCommentsMsg = document.getElementById('noCommentsMsg');
+                if (noCommentsMsg) noCommentsMsg.remove();
+                const container = document.getElementById('commentsContainer');
+                const commentHtml = `
+                    <div class="comment-item">
+                        <div class="d-flex gap-3">
+                            <div class="comment-avatar flex-shrink-0">
+                                ${escapeHtml(data.comment.username[0].toUpperCase())}
+                            </div>
+                            <div>
+                                <div class="mb-1">
+                                    <strong class="text-white">${escapeHtml(data.comment.username)}</strong>
+                                    <small class="text-secondary ms-2">${escapeHtml(data.comment.created_at)}</small>
+                                </div>
+                                <p class="mb-0 text-secondary">${escapeHtml(data.comment.content)}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('afterbegin', commentHtml);
+                document.getElementById('commentInput').value = '';
+                const countEl = document.querySelector('.comments-section h5');
+                const currentCount = parseInt(countEl.textContent.match(/\d+/)?.[0] || 0);
+                countEl.innerHTML = `<i class="bi bi-chat-dots me-2" style="color: #ff4d6d;"></i>Comments (${currentCount + 1})`;
+                showToast('Comment posted!', 'success');
+            } else if (data.error) {
+                showToast(data.error, 'danger');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Failed to post comment', 'danger');
+        }
+    }
+    {% else %}
+    function likeVideo() { window.location = "{% url 'accounts:login' %}?next={{ request.path }}"; }
+    function dislikeVideo() { likeVideo(); }
+    function toggleFavorite() { likeVideo(); }
+    function addComment() { likeVideo(); }
+    {% endif %}
+</script>
+{% endblock %}

@@ -2,20 +2,44 @@
 Django settings for core project.
 """
 
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-6c49h$%0zbghaapjzoqd5fehy7n1#+vgnv)t*8t&tveeduc_9t'
 
-DEBUG = True
+def env_bool(name, default=False):
+    """Read a boolean from the environment ('1'/'true'/'yes'/'on' => True)."""
+    return os.environ.get(name, str(default)).strip().lower() in ('1', 'true', 'yes', 'on')
 
-ALLOWED_HOSTS = ['*']
 
-CSRF_TRUSTED_ORIGINS = [
-    'https://gonut.click',
-    'https://www.gonut.click',
-]
+def env_list(name, default=''):
+    """Read a comma-separated list from the environment."""
+    return [item.strip() for item in os.environ.get(name, default).split(',') if item.strip()]
+
+
+# SECURITY WARNING: keep the secret key used in production secret!
+# The fallback below is the ORIGINAL committed key and must be considered
+# COMPROMISED (it lives in git history). Set DJANGO_SECRET_KEY in the
+# environment for any real deployment and rotate it. See .env.example.
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-6c49h$%0zbghaapjzoqd5fehy7n1#+vgnv)t*8t&tveeduc_9t',
+)
+
+# SECURITY WARNING: don't run with debug turned on in production!
+# Defaults to False; set DJANGO_DEBUG=1 locally for development.
+DEBUG = env_bool('DJANGO_DEBUG', default=False)
+
+ALLOWED_HOSTS = env_list(
+    'DJANGO_ALLOWED_HOSTS',
+    'gonut.click,www.gonut.click,localhost,127.0.0.1',
+)
+
+CSRF_TRUSTED_ORIGINS = env_list(
+    'DJANGO_CSRF_TRUSTED_ORIGINS',
+    'https://gonut.click,https://www.gonut.click',
+)
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -35,6 +59,9 @@ SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # WhiteNoise serves static files efficiently even when DEBUG=False,
+    # so the site keeps working in production without a separate web server.
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -101,6 +128,19 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# WhiteNoise: compress static files (no manifest, so a missing referenced
+# file never crashes a page) and serve straight from the finders, which means
+# the site works whether or not `collectstatic` has been run.
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
+    },
+}
+WHITENOISE_USE_FINDERS = True
+
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -133,6 +173,32 @@ CSRF_COOKIE_SECURE = not DEBUG  # Only send CSRF cookie over HTTPS in production
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_DOMAIN = '.gonut.click' if not DEBUG else None  # Share CSRF across subdomains
+
+# =============================================================================
+# Security Hardening
+# =============================================================================
+# Trust the X-Forwarded-Proto header from the front-end proxy/load balancer so
+# Django knows the original request was HTTPS (prevents redirect loops).
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Don't let browsers MIME-sniff responses away from the declared content-type.
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# Limit referrer leakage to other origins.
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
+# No one may frame our pages (clickjacking protection). We embed *other* sites
+# in iframes on our watch pages, which this setting does not affect.
+X_FRAME_OPTIONS = 'DENY'
+
+if not DEBUG:
+    # Redirect all HTTP to HTTPS (toggle off via env if the proxy already does it).
+    SECURE_SSL_REDIRECT = env_bool('DJANGO_SECURE_SSL_REDIRECT', default=True)
+
+    # HTTP Strict Transport Security — tell browsers to always use HTTPS.
+    SECURE_HSTS_SECONDS = int(os.environ.get('DJANGO_HSTS_SECONDS', 31536000))  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 # =============================================================================
 # SEO & Site Configuration

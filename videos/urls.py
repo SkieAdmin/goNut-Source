@@ -33,6 +33,11 @@ urlpatterns = [
     # xVideos section
     path('xvideos/watch/<str:video_id>/', views.xvideos_watch_view, name='xvideos_watch'),
 
+    # RedGifs section
+    path('redgifs/', views.redgifs_browse_view, name='redgifs_browse'),
+    path('redgifs/watch/<str:video_id>/', views.redgifs_watch_view, name='redgifs_watch'),
+    path('redgifs/search/', views.redgifs_search_view, name='redgifs_search'),
+
     # Pornstars section
     path('pornstars/', views.pornstars_view, name='pornstars'),
     path('pornstar/<slug:slug>/', views.pornstar_detail_view, name='pornstar_detail'),

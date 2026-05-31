@@ -1,10 +1,11 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.sitemaps.views import sitemap
 from django.http import HttpResponse
 from django.views.decorators.cache import cache_page
+from django.views.static import serve as media_serve
 
 from .sitemaps import StaticViewSitemap, CategorySitemap
 
@@ -44,6 +45,12 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
 ]
 
+# Serve user-uploaded media. There is no separate web server configured for
+# this project, so Django serves /media/ in production too (WhiteNoise handles
+# /static/ via middleware). If you later put nginx/CDN in front, drop this.
+urlpatterns += [
+    re_path(r'^media/(?P<path>.*)$', media_serve, {'document_root': settings.MEDIA_ROOT}),
+]
+
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])

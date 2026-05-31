@@ -416,13 +416,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const commentHtml = `
                     <div class="comment-item">
                         <div class="d-flex gap-3">
-                            <div class="comment-avatar">${data.username[0].toUpperCase()}</div>
+                            <div class="comment-avatar">${escapeHtml(data.username[0].toUpperCase())}</div>
                             <div>
                                 <div class="d-flex gap-2 align-items-center mb-1">
-                                    <strong>${data.username}</strong>
-                                    <small class="text-secondary">${data.created_at}</small>
+                                    <strong>${escapeHtml(data.username)}</strong>
+                                    <small class="text-secondary">${escapeHtml(data.created_at)}</small>
                                 </div>
-                                <p class="mb-0 text-secondary">${data.content}</p>
+                                <p class="mb-0 text-secondary">${escapeHtml(data.content)}</p>
                             </div>
                         </div>
                     </div>

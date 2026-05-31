@@ -9,12 +9,19 @@
     --primary-light: #a855f7;
     --accent: #c084fc;
 
+    /* Legacy aliases — many templates reference these older names */
+    --purple-primary: var(--primary);
+    --purple-light: var(--primary-light);
+    --purple-dark: var(--primary-dark);
+
     /* Backgrounds */
     --bg-body: #0f0f0f;
     --bg-card: #1a1a1a;
     --bg-hover: #252525;
     --bg-input: #1a1a1a;
     --bg-glass: rgba(15, 15, 15, 0.8);
+    --bg-primary: var(--bg-body);
+    --bg-secondary: #202022;
 
     /* Text */
     --text-primary: #ffffff;
@@ -43,12 +50,19 @@
     --accent: #7e22ce;
     /* Darker accent for light mode contrast */
 
+    /* Legacy aliases — many templates reference these older names */
+    --purple-primary: var(--primary);
+    --purple-light: var(--primary-light);
+    --purple-dark: var(--primary-dark);
+
     /* Backgrounds */
     --bg-body: #f8fafc;
     --bg-card: #ffffff;
     --bg-hover: #f1f5f9;
     --bg-input: #f1f5f9;
     --bg-glass: rgba(255, 255, 255, 0.8);
+    --bg-primary: var(--bg-body);
+    --bg-secondary: #eef2f7;
 
     /* Text */
     --text-primary: #0f172a;
@@ -933,5 +947,160 @@ select.form-select option:checked,
     .pornstar-name {
         font-size: 0.65rem;
         max-width: 56px;
+    }
+}
+
+/* =========================================================================
+   POLISH & RESPONSIVENESS (added 2026)
+   Keeps the existing purple / dark identity; refines spacing, typography,
+   accessibility and mobile behaviour across the site.
+   ========================================================================= */
+
+/* Never let media break the layout / cause horizontal scroll on phones. */
+img,
+iframe,
+video {
+    max-width: 100%;
+}
+
+/* Visible keyboard-focus ring for accessibility (mouse users unaffected). */
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+.nav-link:focus-visible,
+.bottom-nav-item:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible {
+    outline: 2px solid var(--primary-light);
+    outline-offset: 2px;
+}
+
+/* Smoother, consistent hover for the small "View All" outline buttons. */
+.btn-outline-purple.btn-sm {
+    padding: 0.35rem 0.9rem;
+    border-width: 1.5px;
+    border-radius: 10px;
+}
+
+/* Featured carousel: rounded + a touch more polish. */
+#featuredCarousel .carousel-control-prev,
+#featuredCarousel .carousel-control-next {
+    width: 8%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#featuredCarousel:hover .carousel-control-prev,
+#featuredCarousel:hover .carousel-control-next {
+    opacity: 0.9;
+}
+
+/* Slightly lift section spacing rhythm on desktop. */
+.section-title {
+    letter-spacing: -0.02em;
+}
+
+/* ----------------------------------------------------------------------- */
+/* Tablet and below                                                        */
+/* ----------------------------------------------------------------------- */
+@media (max-width: 991.98px) {
+
+    /* Keep page content clear of the fixed bottom navigation. */
+    main {
+        padding-bottom: 90px !important;
+    }
+
+    /* Respect the iPhone home-indicator safe area. */
+    .bottom-nav {
+        padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
+    }
+}
+
+/* ----------------------------------------------------------------------- */
+/* Phones                                                                  */
+/* ----------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+
+    /* Tighter gutters so 2-up cards get more room. */
+    .container {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    main.container {
+        padding-top: 1rem;
+    }
+
+    /* Smaller, calmer section headings. */
+    .section-title {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+        gap: 0.6rem;
+    }
+
+    .section-title::before {
+        height: 22px;
+        width: 5px;
+    }
+
+    /* Compact video cards for the 2-column mobile grid. */
+    .video-info {
+        padding: 0.7rem 0.75rem 0.85rem;
+    }
+
+    .video-title {
+        font-size: 0.85rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .video-meta {
+        font-size: 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .video-card {
+        border-radius: 12px;
+    }
+
+    /* Reduce the tall hero on small screens. */
+    #featuredCarousel .carousel-inner {
+        max-height: 240px;
+    }
+
+    #featuredCarousel .carousel-item img {
+        height: 240px !important;
+    }
+
+    #featuredCarousel h3 {
+        font-size: 1.1rem;
+    }
+
+    /* Stack related-video thumbnails a bit smaller on the watch page. */
+    .related-thumbnail {
+        width: 130px;
+    }
+
+    /* Comfortable bottom-nav icons/labels. */
+    .bottom-nav-item {
+        font-size: 0.66rem;
+    }
+
+    /* 16px inputs stop iOS Safari from auto-zooming on focus. */
+    .form-control,
+    .form-select,
+    .search-box input,
+    textarea {
+        font-size: 16px;
+    }
+}
+
+/* Very small phones: keep things from feeling cramped. */
+@media (max-width: 380px) {
+    .video-info {
+        padding: 0.55rem 0.6rem 0.7rem;
+    }
+
+    .related-thumbnail {
+        width: 108px;
     }
 }
